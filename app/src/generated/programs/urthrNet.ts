@@ -35,10 +35,9 @@ import {
 export const URTHR_NET_PROGRAM_ADDRESS =
   "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR" as Address<"3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR">;
 
-export const UrthrNetInstruction = {
-  Initialize: 0,
-} as const;
-export type UrthrNetInstruction = (typeof UrthrNetInstruction)[keyof typeof UrthrNetInstruction];
+export enum UrthrNetInstruction {
+  Initialize,
+}
 
 export function identifyUrthrNetInstruction(
   instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
@@ -64,7 +63,7 @@ export function identifyUrthrNetInstruction(
 export type ParsedUrthrNetInstruction<
   TProgram extends string = "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR",
 > = {
-  instructionType: typeof UrthrNetInstruction.Initialize;
+  instructionType: UrthrNetInstruction.Initialize;
 } & ParsedInitializeInstruction<TProgram>;
 
 export function parseUrthrNetInstruction<TProgram extends string>(
@@ -102,7 +101,7 @@ export function urthrNetProgram() {
     client: T,
   ): Omit<T, "urthrNet"> & { urthrNet: UrthrNetPlugin } => {
     return extendClient(client, {
-      urthrNet: {
+      urthrNet: <UrthrNetPlugin>{
         instructions: {
           initialize: (input) =>
             addSelfPlanAndSendFunctions(
@@ -110,7 +109,7 @@ export function urthrNetProgram() {
               getInitializeInstruction(input),
             ),
         },
-      } as UrthrNetPlugin,
+      },
     });
   };
 }
