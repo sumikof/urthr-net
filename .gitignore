@@ -8,3 +8,7 @@ test-ledger
 .surfpool
 
 .pnpm-store
+
+app/node_modules
+app/dist
+app/.env
