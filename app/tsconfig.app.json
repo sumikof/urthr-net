@@ -18,6 +18,8 @@
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    /* Codama's generated program client emits a runtime `enum`; allow it.
+       Vite/esbuild compile enums fine. */
     "erasableSyntaxOnly": false,
     "noFallthroughCasesInSwitch": true
   },

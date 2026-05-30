@@ -1,4 +1,4 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { autoDiscover, createClient } from "@solana/client";
 import { SolanaProvider } from "@solana/react-hooks";
 import { RPC_URL, WS_URL } from "./lib/rpc";
@@ -9,6 +9,6 @@ export const solanaClient = createClient({
   walletConnectors: autoDiscover(),
 });
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return <SolanaProvider client={solanaClient}>{children}</SolanaProvider>;
 }

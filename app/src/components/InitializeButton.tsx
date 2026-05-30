@@ -18,7 +18,7 @@ export function InitializeButton() {
       clearInstructions();
       addInstruction(getInitializeInstruction());
       const result = await prepareAndSend({ authority: wallet });
-      setSignature(String(result));
+      setSignature(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
