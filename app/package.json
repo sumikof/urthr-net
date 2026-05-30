@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "codegen": "node scripts/codegen.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:initialize": "node scripts/verify-initialize.mjs"
   },
   "dependencies": {
     "@solana/client": "^1.7.0",
