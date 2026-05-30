@@ -67,3 +67,6 @@ fi
 if [ -f "web/package.json" ]; then
   pnpm -C web install --ignore-scripts
 fi
+
+claude plugin marketplace add obra/superpowers-marketplace
+claude plugin install superpowers@superpowers-marketplace
