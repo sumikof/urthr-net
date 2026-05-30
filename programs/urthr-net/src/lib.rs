@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("6xQqNSjG7Z3KMeMtWSPNRKpwVhzxLjcbBHSR4qa5SfTm");
+declare_id!("3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR");
 
 #[program]
 pub mod urthr_net {
