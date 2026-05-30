@@ -1,0 +1,44 @@
+{
+  "name": "solana-anchor-dev",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "ubuntu",
+
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/ubuntu/.claude,type=volume",
+    "source=solana-config-${devcontainerId},target=/home/ubuntu/.config/solana,type=volume",
+    "source=cargo-registry-${devcontainerId},target=/home/ubuntu/.cargo/registry,type=volume",
+    "source=avm-cache-${devcontainerId},target=/home/ubuntu/.avm,type=volume"
+  ],
+
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/ubuntu/.claude"
+  },
+
+  "forwardPorts": [9900],
+  "appPort": [
+    "0.0.0.0:5173:5173",
+    "0.0.0.0:8899:8899",
+    "0.0.0.0:8900:8900"
+  ],
+  "portsAttributes": {
+    "8899": { "label": "Solana RPC" },
+    "8900": { "label": "Solana WebSocket" },
+    "9900": { "label": "Solana Faucet/Gossip" },
+    "5173": { "label": "Portal (Vite)" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "vscode": { }
+  }
+}
