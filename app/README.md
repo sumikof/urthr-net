@@ -1,73 +1,30 @@
-# React + TypeScript + Vite
+# urthr-net Web (wallet connect)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 前提
+- Surfpool 1.2.1 / Node 24 / pnpm
+- ルートで `anchor build` 済み（`target/idl/urthr_net.json` が存在）
 
-Currently, two official plugins are available:
+## 起動手順
+1. localnet（surfnet）を起動（リポジトリルートで）:
+   ```bash
+   NO_DNA=1 surfpool start
+   ```
+   RPC: http://127.0.0.1:8899 / WS: ws://127.0.0.1:8900
+2. クライアント生成（IDL変更時のみ）:
+   ```bash
+   cd app && pnpm codegen
+   ```
+3. 開発サーバ起動:
+   ```bash
+   cd app && pnpm dev
+   ```
+   http://localhost:5173 を開く。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Phantom を localnet に向ける
+1. Phantom → 設定 → Developer Settings → Change Network → Custom RPC
+2. RPC URL に `http://127.0.0.1:8899` を設定（Cluster: Custom/Localnet）
+3. Webで「接続」→「2 SOL Airdrop」→「initialize を実行」
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 注意
+- 残高不足の場合は Airdrop ボタンで付与する。
+- 拡張のRPCがlocalhost以外だと残高0や送信失敗になる。
