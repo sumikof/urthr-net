@@ -1,5 +1,6 @@
 mod common;
 use common::*;
+use solana_signer::Signer;
 use urthr_net::state::{Campaign, Claim, ClaimStatus, Publisher};
 
 // Sets up protocol + a publisher (staked 100) + a funded campaign (200 budget, price 1/event).
@@ -150,6 +151,48 @@ fn submit_claim_rejects_over_budget() {
             system_program: anchor_lang::system_program::ID,
         },
         &[],
+    );
+    assert!(res.is_err());
+}
+
+pub fn challenge(env: &mut Env, claim: solana_pubkey::Pubkey, challenger: &solana_keypair::Keypair) {
+    env.svm.airdrop(&challenger.pubkey(), 1_000_000_000).unwrap();
+    env.send(
+        urthr_net::instruction::ChallengeClaim { evidence_hash: [3u8; 32] },
+        urthr_net::accounts::ChallengeClaim {
+            challenger: challenger.pk(),
+            claim,
+        },
+        &[challenger],
+    ).unwrap();
+}
+
+#[test]
+fn challenge_moves_claim_to_challenged() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    let challenger = solana_keypair::Keypair::new();
+    challenge(&mut env, claim, &challenger);
+
+    let c: Claim = env.get(&claim);
+    assert!(c.status == ClaimStatus::Challenged);
+    assert_eq!(c.evidence_hash, [3u8; 32]);
+    assert_eq!(c.challenger, Some(challenger.pk()));
+}
+
+#[test]
+fn challenge_after_window_is_rejected() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    env.warp_unix(4000); // window was 3600
+    let challenger = solana_keypair::Keypair::new();
+    env.svm.airdrop(&challenger.pubkey(), 1_000_000_000).unwrap();
+    let res = env.send(
+        urthr_net::instruction::ChallengeClaim { evidence_hash: [3u8; 32] },
+        urthr_net::accounts::ChallengeClaim { challenger: challenger.pk(), claim },
+        &[&challenger],
     );
     assert!(res.is_err());
 }

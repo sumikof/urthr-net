@@ -11,6 +11,7 @@ pub mod unstake;
 pub mod create_campaign;
 pub mod fund_campaign;
 pub mod submit_claim;
+pub mod challenge_claim;
 
 pub use initialize_protocol::*;
 pub use register_publisher::*;
@@ -19,3 +20,4 @@ pub use unstake::*;
 pub use create_campaign::*;
 pub use fund_campaign::*;
 pub use submit_claim::*;
+pub use challenge_claim::*;
