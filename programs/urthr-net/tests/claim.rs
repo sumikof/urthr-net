@@ -251,3 +251,25 @@ fn settle_before_window_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn settle_challenged_claim_is_rejected() {
+    // A challenged claim must go through resolve_claim (attestor), not settle.
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    let challenger = solana_keypair::Keypair::new();
+    challenge(&mut env, claim, &challenger);
+    env.warp_unix(4000); // even past the window, a Challenged claim can't be settled
+    let res = env.send(
+        urthr_net::instruction::SettleClaim {},
+        urthr_net::accounts::SettleClaim {
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    );
+    assert!(res.is_err());
+}

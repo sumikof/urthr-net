@@ -7,7 +7,13 @@ use crate::util::fee_amount;
 
 #[derive(Accounts)]
 pub struct SettleClaim<'info> {
-    #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = treasury)]
+    #[account(
+        seeds = [CONFIG_SEED],
+        bump = config.bump,
+        has_one = treasury,
+        has_one = payment_mint @ UrthrError::InvalidMint,
+        constraint = !config.paused @ UrthrError::ProtocolPaused,
+    )]
     pub config: Account<'info, ProtocolConfig>,
 
     #[account(
@@ -20,7 +26,8 @@ pub struct SettleClaim<'info> {
 
     #[account(
         mut,
-        constraint = claim.campaign == campaign.key() @ UrthrError::Unauthorized,
+        seeds = [CLAIM_SEED, campaign.key().as_ref(), &claim.claim_nonce.to_le_bytes()],
+        bump = claim.bump,
         constraint = claim.publisher == publisher.key() @ UrthrError::Unauthorized,
     )]
     pub claim: Box<Account<'info, Claim>>,
@@ -31,7 +38,11 @@ pub struct SettleClaim<'info> {
     #[account(mut)]
     pub treasury: Box<Account<'info, TokenAccount>>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [PUBLISHER_SEED, publisher.authority.as_ref()],
+        bump = publisher.bump,
+    )]
     pub publisher: Box<Account<'info, Publisher>>,
 
     #[account(mut, token::mint = payment_mint, token::authority = publisher.authority)]
@@ -63,6 +74,7 @@ pub fn handler(ctx: Context<SettleClaim>) -> Result<()> {
     )?;
 
     // Accounting: consume locked budget, release locked stake.
+    // budget_remaining is NOT restored — the tokens left the escrow vault above.
     let campaign = &mut ctx.accounts.campaign;
     campaign.locked_budget = campaign.locked_budget
         .checked_sub(amount).ok_or(UrthrError::MathOverflow)?;
