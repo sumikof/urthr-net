@@ -37,4 +37,12 @@ pub mod urthr_net {
     pub fn unstake(ctx: Context<Unstake>, amount: u64) -> Result<()> {
         unstake::handler(ctx, amount)
     }
+
+    pub fn create_campaign(ctx: Context<CreateCampaign>, campaign_id: u64, price_per_event: u64) -> Result<()> {
+        create_campaign::handler(ctx, campaign_id, price_per_event)
+    }
+
+    pub fn fund_campaign(ctx: Context<FundCampaign>, amount: u64) -> Result<()> {
+        fund_campaign::handler(ctx, amount)
+    }
 }

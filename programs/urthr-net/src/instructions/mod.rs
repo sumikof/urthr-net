@@ -8,8 +8,12 @@ pub mod initialize_protocol;
 pub mod register_publisher;
 pub mod stake;
 pub mod unstake;
+pub mod create_campaign;
+pub mod fund_campaign;
 
 pub use initialize_protocol::*;
 pub use register_publisher::*;
 pub use stake::*;
 pub use unstake::*;
+pub use create_campaign::*;
+pub use fund_campaign::*;
