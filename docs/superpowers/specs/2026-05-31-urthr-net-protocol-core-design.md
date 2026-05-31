@@ -104,7 +104,7 @@ urthr-net/
 | `payment_mint` | Pubkey | 許可する SPL mint（USDC 想定） |
 | `protocol_fee_bps` | u16 | 手数料（bps、分母 10_000）。`<= 10_000` を検証 |
 | `min_publisher_stake` | u64 | publisher 参加に必要な最小担保 |
-| `challenge_window` | i64 | チャレンジ可能秒数 |
+| `challenge_window` | u64 | チャレンジ可能秒数（負値を表現不能にするため u64） |
 | `treasury` | Pubkey | 手数料受取トークンアカウント（ATA） |
 | `paused` | bool | 緊急停止 |
 | `bump` | u8 | |
@@ -139,6 +139,7 @@ urthr-net/
 |---|---|---|
 | `campaign` | Pubkey | 対象キャンペーン |
 | `publisher` | Pubkey | 申告 publisher |
+| `claim_nonce` | u64 | PDA seed に使った採番値（自己識別用にアカウントへも保存） |
 | `event_count` | u64 | 集計イベント件数（> 0） |
 | `amount` | u64 | `event_count * price_per_event`（checked） |
 | `merkle_root` | `[u8; 32]` | 将来の精密証拠用（MVP は保持のみ・未検証） |

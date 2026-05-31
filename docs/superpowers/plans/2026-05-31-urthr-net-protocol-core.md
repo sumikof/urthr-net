@@ -746,7 +746,7 @@ pub fn handler(
     attestor: Pubkey,
     protocol_fee_bps: u16,
     min_publisher_stake: u64,
-    challenge_window: i64,
+    challenge_window: u64,
 ) -> Result<()> {
     require!(protocol_fee_bps <= FEE_DENOMINATOR, UrthrError::InvalidFeeBps);
 
@@ -792,7 +792,7 @@ pub mod urthr_net {
         attestor: Pubkey,
         protocol_fee_bps: u16,
         min_publisher_stake: u64,
-        challenge_window: i64,
+        challenge_window: u64,
     ) -> Result<()> {
         initialize_protocol::handler(ctx, attestor, protocol_fee_bps, min_publisher_stake, challenge_window)
     }
@@ -1783,13 +1783,14 @@ pub fn handler(ctx: Context<SubmitClaim>, event_count: u64, merkle_root: [u8; 32
     let claim = &mut ctx.accounts.claim;
     claim.campaign = campaign.key();
     claim.publisher = publisher.key();
+    claim.claim_nonce = campaign.claims_count; // nonce used in the PDA seed
     claim.event_count = event_count;
     claim.amount = amount;
     claim.merkle_root = merkle_root;
     claim.evidence_hash = [0u8; 32];
     claim.challenger = None;
     claim.challenge_deadline = now
-        .checked_add(ctx.accounts.config.challenge_window).ok_or(UrthrError::MathOverflow)?;
+        .checked_add(ctx.accounts.config.challenge_window as i64).ok_or(UrthrError::MathOverflow)?;
     claim.status = ClaimStatus::Pending;
     claim.bump = ctx.bumps.claim;
 

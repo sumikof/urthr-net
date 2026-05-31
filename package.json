@@ -2,7 +2,8 @@
   "license": "ISC",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "test:integration": "node tests/lifecycle.mjs"
   },
   "dependencies": {
     "@anchor-lang/core": "^1.0.2"
