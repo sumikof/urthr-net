@@ -16,6 +16,34 @@ use {
     },
 };
 
+// ---------------------------------------------------------------------------
+// Cross-version pubkey conversion helpers
+//
+// The crate graph (Agave split) has multiple `solana-pubkey` versions:
+//   - 3.0.0 — our canonical type: `solana_pubkey::Pubkey`, same as
+//              `anchor_lang::prelude::Pubkey` and `urthr_net::accounts::*`
+//   - 2.4.0 — used by `solana-keypair`/`solana-signer` and `spl-token`
+//
+// All helpers here convert TO the canonical 3.0.0 type via `new_from_array`.
+// ---------------------------------------------------------------------------
+
+/// Convert a `solana_keypair::Keypair`'s pubkey (2.4.0) to the canonical
+/// 3.0.0 `solana_pubkey::Pubkey`.
+pub trait KeypairPk {
+    fn pk(&self) -> Pubkey;
+}
+
+impl KeypairPk for Keypair {
+    fn pk(&self) -> Pubkey {
+        Pubkey::new_from_array(solana_signer::Signer::pubkey(self).to_bytes())
+    }
+}
+
+/// Return `spl_token::ID` as the canonical `solana_pubkey::Pubkey` (3.0.0).
+pub fn spl_token_id() -> Pubkey {
+    Pubkey::new_from_array(spl_token::ID.to_bytes())
+}
+
 /// spl-token 8 packs/unpacks with its own `Pubkey` type (a distinct
 /// `solana-pubkey` version from anchor's), so bridge by raw bytes.
 type SplPubkey = spl_token::solana_program::pubkey::Pubkey;
@@ -138,6 +166,15 @@ impl Env {
         signers.extend_from_slice(extra_signers);
         let tx = VersionedTransaction::try_new(VersionedMessage::Legacy(msg), &signers).unwrap();
         self.svm.send_transaction(tx).map(|_| ())
+    }
+
+    /// Return the payer's pubkey as the canonical `solana_pubkey::Pubkey` (3.0.0).
+    ///
+    /// `solana_keypair::Keypair::pubkey()` returns a 2.4.0 pubkey; this method
+    /// converts it via `new_from_array` so callers can use it directly in
+    /// `urthr_net::accounts::*` fields without any local conversion scaffolding.
+    pub fn payer_pk(&self) -> Pubkey {
+        self.payer.pk()
     }
 
     /// Advance the simulated clock by `seconds` (relative delta, not an absolute timestamp).
