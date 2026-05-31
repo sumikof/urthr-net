@@ -32,6 +32,9 @@ pub struct CloseCampaign<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+// Intentionally NOT gated on `config.paused`: closing returns the advertiser's
+// own unspent budget (an exit/withdrawal), which should remain available even
+// during an emergency pause — same rationale as `unstake`.
 pub fn handler(ctx: Context<CloseCampaign>) -> Result<()> {
     let refund = ctx.accounts.campaign.budget_remaining;
     if refund > 0 {

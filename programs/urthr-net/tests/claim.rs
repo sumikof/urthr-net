@@ -429,3 +429,41 @@ fn close_campaign_with_locked_budget_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn close_campaign_after_partial_settle_refunds_remainder() {
+    // End-to-end: fund 200, submit+settle one 40 claim, then close refunds the 160 left.
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40); // budget_remaining 200 -> 160, locked 40
+    env.warp_unix(4000); // past the 3600 challenge window
+    env.send(
+        urthr_net::instruction::SettleClaim {},
+        urthr_net::accounts::SettleClaim {
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+    // settle releases the lock but does NOT restore budget_remaining (tokens left escrow).
+    assert_eq!(env.get::<Campaign>(&s.campaign).locked_budget, 0);
+    assert_eq!(env.get::<Campaign>(&s.campaign).budget_remaining, 160 * ONE_TOKEN);
+
+    let wallet_before = env.token_balance(&s.wallet);
+    env.send(
+        urthr_net::instruction::CloseCampaign {},
+        urthr_net::accounts::CloseCampaign {
+            advertiser: s.authority, config: s.config, campaign: s.campaign,
+            escrow_vault: s.escrow_vault, advertiser_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+    assert_eq!(env.token_balance(&s.wallet), wallet_before + 160 * ONE_TOKEN);
+    assert_eq!(env.token_balance(&s.escrow_vault), 0);
+    let c: Campaign = env.get(&s.campaign);
+    assert!(c.status == CampaignStatus::Closed);
+    assert_eq!(c.budget_remaining, 0);
+}
