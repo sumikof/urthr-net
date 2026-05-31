@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Never lint generated code (codama output) or build artifacts.
+  globalIgnores(['dist', 'src/generated']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -17,6 +18,12 @@ export default defineConfig([
     ],
     languageOptions: {
       globals: globals.browser,
+    },
+    rules: {
+      // This is a dev/debug harness; co-locating small helpers (parsers, the
+      // shared client) with components is intentional. Fast-refresh DX is not a
+      // correctness concern here, so surface it as a warning rather than an error.
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
 ])
