@@ -362,3 +362,24 @@ fn resolve_by_non_attestor_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn resolve_unchallenged_claim_is_rejected() {
+    // resolve_claim only adjudicates Challenged claims; a Pending one must error.
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40); // still Pending (never challenged)
+    let res = env.send(
+        urthr_net::instruction::ResolveClaim { fraud: true },
+        urthr_net::accounts::ResolveClaim {
+            attestor: s.authority,
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, stake_vault: s.stake_vault,
+            publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    );
+    assert!(res.is_err());
+}

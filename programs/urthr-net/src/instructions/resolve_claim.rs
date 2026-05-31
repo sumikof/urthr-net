@@ -50,7 +50,7 @@ pub struct ResolveClaim<'info> {
     )]
     pub publisher: Box<Account<'info, Publisher>>,
 
-    #[account(mut)]
+    #[account(mut, token::mint = payment_mint)]
     pub stake_vault: Box<Account<'info, TokenAccount>>,
 
     #[account(mut, token::mint = payment_mint, token::authority = publisher.authority)]
@@ -98,6 +98,8 @@ pub fn handler(ctx: Context<ResolveClaim>, fraud: bool) -> Result<()> {
             .checked_add(amount).ok_or(UrthrError::MathOverflow)?; // compensation
 
         let publisher = &mut ctx.accounts.publisher;
+        // Invariant: `amount` was locked from staked_amount at submit_claim time,
+        // so these checked_subs succeed; they error rather than wrap if that breaks.
         publisher.staked_amount = publisher.staked_amount
             .checked_sub(amount).ok_or(UrthrError::MathOverflow)?;
         publisher.locked_amount = publisher.locked_amount
