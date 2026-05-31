@@ -29,4 +29,12 @@ pub mod urthr_net {
     pub fn register_publisher(ctx: Context<RegisterPublisher>, metadata: [u8; 32]) -> Result<()> {
         register_publisher::handler(ctx, metadata)
     }
+
+    pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
+        stake::handler(ctx, amount)
+    }
+
+    pub fn unstake(ctx: Context<Unstake>, amount: u64) -> Result<()> {
+        unstake::handler(ctx, amount)
+    }
 }
