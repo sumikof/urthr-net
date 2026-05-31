@@ -57,4 +57,8 @@ pub mod urthr_net {
     pub fn settle_claim(ctx: Context<SettleClaim>) -> Result<()> {
         settle_claim::handler(ctx)
     }
+
+    pub fn resolve_claim(ctx: Context<ResolveClaim>, fraud: bool) -> Result<()> {
+        resolve_claim::handler(ctx, fraud)
+    }
 }

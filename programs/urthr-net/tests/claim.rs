@@ -273,3 +273,92 @@ fn settle_challenged_claim_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn resolve_fraud_slashes_stake_and_compensates_advertiser() {
+    let mut env = Env::new();
+    let s = setup(&mut env); // attestor == payer
+    let claim = submit(&mut env, &s, 0, 40); // amount 40
+    let challenger = solana_keypair::Keypair::new();
+    challenge(&mut env, claim, &challenger);
+
+    let stake_before = env.token_balance(&s.stake_vault);   // 100
+    let escrow_before = env.token_balance(&s.escrow_vault); // 200
+
+    env.send(
+        urthr_net::instruction::ResolveClaim { fraud: true },
+        urthr_net::accounts::ResolveClaim {
+            attestor: s.authority,
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, stake_vault: s.stake_vault,
+            publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+
+    assert_eq!(env.token_balance(&s.stake_vault), stake_before - 40 * ONE_TOKEN);
+    assert_eq!(env.token_balance(&s.escrow_vault), escrow_before + 40 * ONE_TOKEN);
+
+    let camp: Campaign = env.get(&s.campaign);
+    assert_eq!(camp.budget_remaining, 240 * ONE_TOKEN); // 160 + 40 unlock + 40 comp
+    assert_eq!(camp.locked_budget, 0);
+
+    let pubr: Publisher = env.get(&s.publisher);
+    assert_eq!(pubr.staked_amount, 60 * ONE_TOKEN);
+    assert_eq!(pubr.locked_amount, 0);
+    assert!(env.get::<Claim>(&claim).status == ClaimStatus::Slashed);
+}
+
+#[test]
+fn resolve_valid_settles_like_unchallenged() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    let challenger = solana_keypair::Keypair::new();
+    challenge(&mut env, claim, &challenger);
+    let wallet_before = env.token_balance(&s.wallet);
+
+    env.send(
+        urthr_net::instruction::ResolveClaim { fraud: false },
+        urthr_net::accounts::ResolveClaim {
+            attestor: s.authority,
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, stake_vault: s.stake_vault,
+            publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+
+    let fee = 40 * ONE_TOKEN / 10_000 * 50;
+    assert_eq!(env.token_balance(&s.wallet), wallet_before + (40 * ONE_TOKEN - fee));
+    assert_eq!(env.token_balance(&s.treasury), fee);
+    assert!(env.get::<Claim>(&claim).status == ClaimStatus::Settled);
+}
+
+#[test]
+fn resolve_by_non_attestor_is_rejected() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    let challenger = solana_keypair::Keypair::new();
+    challenge(&mut env, claim, &challenger);
+    let imposter = solana_keypair::Keypair::new();
+    env.svm.airdrop(&imposter.pubkey(), 1_000_000_000).unwrap();
+    let res = env.send(
+        urthr_net::instruction::ResolveClaim { fraud: true },
+        urthr_net::accounts::ResolveClaim {
+            attestor: imposter.pk(),
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, stake_vault: s.stake_vault,
+            publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[&imposter],
+    );
+    assert!(res.is_err());
+}
