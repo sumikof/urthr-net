@@ -2,6 +2,9 @@ use anchor_lang::prelude::*;
 use crate::error::UrthrError;
 
 /// Protocol fee = amount * fee_bps / 10_000, with checked math.
+///
+/// Callers are responsible for validating `fee_bps <= FEE_DENOMINATOR`
+/// (enforced at config time via `UrthrError::InvalidFeeBps`).
 pub fn fee_amount(amount: u64, fee_bps: u16) -> Result<u64> {
     let fee = (amount as u128)
         .checked_mul(fee_bps as u128)
@@ -30,5 +33,11 @@ mod tests {
     fn rounds_down() {
         // 1 bps of 12_345 = 1.2345 -> 1
         assert_eq!(fee_amount(12_345, 1).unwrap(), 1);
+    }
+
+    #[test]
+    fn full_denominator_is_whole_amount() {
+        // 100% (10_000 bps) of the amount is the amount itself.
+        assert_eq!(fee_amount(1_000_000, 10_000).unwrap(), 1_000_000);
     }
 }
