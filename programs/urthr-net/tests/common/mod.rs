@@ -76,9 +76,9 @@ impl Env {
 
     /// Pack an SPL token account holding `amount` of `self.mint`, owned by `owner`.
     pub fn create_token_account(&mut self, owner: &Pubkey, amount: u64) -> Pubkey {
-        let ata = Pubkey::new_unique();
-        self.set_token_account(ata, owner, amount);
-        ata
+        let addr = Pubkey::new_unique();
+        self.set_token_account(addr, owner, amount);
+        addr
     }
 
     /// Set token-account state at an explicit address (use for PDA vaults if pre-seeding).
@@ -105,12 +105,18 @@ impl Env {
     }
 
     pub fn token_balance(&self, address: &Pubkey) -> u64 {
-        let acct = self.svm.get_account(address).unwrap();
+        let acct = self
+            .svm
+            .get_account(address)
+            .unwrap_or_else(|| panic!("token account not found: {address}"));
         SplAccount::unpack(&acct.data).unwrap().amount
     }
 
     pub fn get<T: anchor_lang::AccountDeserialize>(&self, address: &Pubkey) -> T {
-        let acct = self.svm.get_account(address).unwrap();
+        let acct = self
+            .svm
+            .get_account(address)
+            .unwrap_or_else(|| panic!("account not found: {address}"));
         T::try_deserialize(&mut acct.data.as_slice()).unwrap()
     }
 
@@ -134,6 +140,7 @@ impl Env {
         self.svm.send_transaction(tx).map(|_| ())
     }
 
+    /// Advance the simulated clock by `seconds` (relative delta, not an absolute timestamp).
     pub fn warp_unix(&mut self, seconds: i64) {
         let mut clock = self.svm.get_sysvar::<anchor_lang::solana_program::clock::Clock>();
         clock.unix_timestamp += seconds;
