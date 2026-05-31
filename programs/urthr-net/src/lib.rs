@@ -45,4 +45,8 @@ pub mod urthr_net {
     pub fn fund_campaign(ctx: Context<FundCampaign>, amount: u64) -> Result<()> {
         fund_campaign::handler(ctx, amount)
     }
+
+    pub fn submit_claim(ctx: Context<SubmitClaim>, event_count: u64, merkle_root: [u8; 32]) -> Result<()> {
+        submit_claim::handler(ctx, event_count, merkle_root)
+    }
 }
