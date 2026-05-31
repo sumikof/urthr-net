@@ -16,7 +16,13 @@ declare_id!("3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR");
 pub mod urthr_net {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    pub fn initialize_protocol(
+        ctx: Context<InitializeProtocol>,
+        attestor: Pubkey,
+        protocol_fee_bps: u16,
+        min_publisher_stake: u64,
+        challenge_window: u64,
+    ) -> Result<()> {
+        initialize_protocol::handler(ctx, attestor, protocol_fee_bps, min_publisher_stake, challenge_window)
     }
 }
