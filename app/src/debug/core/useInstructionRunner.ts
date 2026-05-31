@@ -5,7 +5,9 @@ import type { Base64EncodedWireTransaction, Instruction, TransactionSigner } fro
 
 /** What a panel's `build` callback must produce: a fully-formed instruction with
  *  its signer account(s) populated by the supplied wallet-derived signer. */
-export type BuildInstruction = (signer: TransactionSigner) => Promise<Instruction> | Instruction;
+export type BuildInstruction = (
+  signer: TransactionSigner,
+) => Promise<Instruction | readonly Instruction[]> | Instruction | readonly Instruction[];
 
 export type SimulationSummary = Readonly<{
   /** Transaction-level error from simulation, or `null` on success. */
@@ -85,9 +87,10 @@ export function useInstructionRunner(): InstructionRunner {
       setSignature(null);
       setError(null);
       try {
-        const ix = await build(signer);
+        const built = await build(signer);
+        const arr = Array.isArray(built) ? built : [built as Instruction];
         pool.clearInstructions();
-        pool.addInstruction(ix);
+        for (const ix of arr) pool.addInstruction(ix);
         // Prepare with the wallet as fee payer/authority so the pooled, prepared
         // transaction is ready for `send()` after approval.
         await pool.prepare({ feePayer: wallet.account.address, authority: wallet });
