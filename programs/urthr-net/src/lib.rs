@@ -53,4 +53,8 @@ pub mod urthr_net {
     pub fn challenge_claim(ctx: Context<ChallengeClaim>, evidence_hash: [u8; 32]) -> Result<()> {
         challenge_claim::handler(ctx, evidence_hash)
     }
+
+    pub fn settle_claim(ctx: Context<SettleClaim>) -> Result<()> {
+        settle_claim::handler(ctx)
+    }
 }

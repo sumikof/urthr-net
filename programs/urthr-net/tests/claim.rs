@@ -196,3 +196,58 @@ fn challenge_after_window_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn settle_unchallenged_pays_publisher_and_fee() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40); // amount 40, fee 0.5%
+
+    env.warp_unix(4000); // past 3600 window
+    let wallet_before = env.token_balance(&s.wallet);
+
+    env.send(
+        urthr_net::instruction::SettleClaim {},
+        urthr_net::accounts::SettleClaim {
+            config: s.config,
+            campaign: s.campaign,
+            claim,
+            escrow_vault: s.escrow_vault,
+            treasury: s.treasury,
+            publisher: s.publisher,
+            publisher_token_account: s.wallet,
+            payment_mint: env.mint,
+            token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+
+    let fee = 40 * ONE_TOKEN / 10_000 * 50; // 0.5%
+    let payout = 40 * ONE_TOKEN - fee;
+    assert_eq!(env.token_balance(&s.wallet), wallet_before + payout);
+    assert_eq!(env.token_balance(&s.treasury), fee);
+
+    let c: Claim = env.get(&claim);
+    assert!(c.status == ClaimStatus::Settled);
+    let camp: Campaign = env.get(&s.campaign);
+    assert_eq!(camp.locked_budget, 0);
+    assert_eq!(env.get::<Publisher>(&s.publisher).locked_amount, 0);
+}
+
+#[test]
+fn settle_before_window_is_rejected() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    let res = env.send(
+        urthr_net::instruction::SettleClaim {},
+        urthr_net::accounts::SettleClaim {
+            config: s.config, campaign: s.campaign, claim,
+            escrow_vault: s.escrow_vault, treasury: s.treasury,
+            publisher: s.publisher, publisher_token_account: s.wallet,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    );
+    assert!(res.is_err());
+}
