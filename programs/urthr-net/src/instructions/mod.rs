@@ -1,3 +1,9 @@
+// Each instruction module exposes a `handler` fn; we always call them by explicit
+// module path (e.g. `initialize_protocol::handler`), so the glob re-exports below
+// (which exist to bring the `#[derive(Accounts)]` structs into the program module's
+// scope) collide harmlessly on the `handler` name. Silence that benign warning.
+#![allow(ambiguous_glob_reexports)]
+
 pub mod initialize_protocol;
 pub mod register_publisher;
 
