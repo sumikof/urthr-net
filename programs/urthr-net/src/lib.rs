@@ -61,4 +61,8 @@ pub mod urthr_net {
     pub fn resolve_claim(ctx: Context<ResolveClaim>, fraud: bool) -> Result<()> {
         resolve_claim::handler(ctx, fraud)
     }
+
+    pub fn close_campaign(ctx: Context<CloseCampaign>) -> Result<()> {
+        close_campaign::handler(ctx)
+    }
 }

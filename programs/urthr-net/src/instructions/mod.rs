@@ -14,6 +14,7 @@ pub mod submit_claim;
 pub mod challenge_claim;
 pub mod settle_claim;
 pub mod resolve_claim;
+pub mod close_campaign;
 
 pub use initialize_protocol::*;
 pub use register_publisher::*;
@@ -25,3 +26,4 @@ pub use submit_claim::*;
 pub use challenge_claim::*;
 pub use settle_claim::*;
 pub use resolve_claim::*;
+pub use close_campaign::*;

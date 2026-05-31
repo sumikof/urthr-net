@@ -1,7 +1,7 @@
 mod common;
 use common::*;
 use solana_signer::Signer;
-use urthr_net::state::{Campaign, Claim, ClaimStatus, Publisher};
+use urthr_net::state::{Campaign, CampaignStatus, Claim, ClaimStatus, Publisher};
 
 // Sets up protocol + a publisher (staked 100) + a funded campaign (200 budget, price 1/event).
 // The payer acts as publisher authority AND advertiser AND attestor (fine for unit tests).
@@ -378,6 +378,52 @@ fn resolve_unchallenged_claim_is_rejected() {
             publisher: s.publisher, stake_vault: s.stake_vault,
             publisher_token_account: s.wallet,
             payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    );
+    assert!(res.is_err());
+}
+
+#[test]
+fn close_campaign_refunds_remaining() {
+    let mut env = Env::new();
+    let s = setup(&mut env); // funded 200, no claims, locked_budget == 0
+    let wallet_before = env.token_balance(&s.wallet);
+    env.send(
+        urthr_net::instruction::CloseCampaign {},
+        urthr_net::accounts::CloseCampaign {
+            advertiser: s.authority,
+            config: s.config,
+            campaign: s.campaign,
+            escrow_vault: s.escrow_vault,
+            advertiser_token_account: s.wallet,
+            payment_mint: env.mint,
+            token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+    assert_eq!(env.token_balance(&s.wallet), wallet_before + 200 * ONE_TOKEN);
+    assert_eq!(env.token_balance(&s.escrow_vault), 0);
+    let c: Campaign = env.get(&s.campaign);
+    assert!(c.status == CampaignStatus::Closed);
+    assert_eq!(c.budget_remaining, 0);
+}
+
+#[test]
+fn close_campaign_with_locked_budget_is_rejected() {
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let _claim = submit(&mut env, &s, 0, 40); // locks 40 of budget
+    let res = env.send(
+        urthr_net::instruction::CloseCampaign {},
+        urthr_net::accounts::CloseCampaign {
+            advertiser: s.authority,
+            config: s.config,
+            campaign: s.campaign,
+            escrow_vault: s.escrow_vault,
+            advertiser_token_account: s.wallet,
+            payment_mint: env.mint,
+            token_program: spl_token_id(),
         },
         &[],
     );
