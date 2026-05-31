@@ -76,8 +76,10 @@ pub fn handler(ctx: Context<SubmitClaim>, event_count: u64, merkle_root: [u8; 32
     claim.merkle_root = merkle_root;
     claim.evidence_hash = [0u8; 32];
     claim.challenger = None;
+    let window = i64::try_from(ctx.accounts.config.challenge_window)
+        .map_err(|_| UrthrError::MathOverflow)?;
     claim.challenge_deadline = now
-        .checked_add(ctx.accounts.config.challenge_window as i64).ok_or(UrthrError::MathOverflow)?;
+        .checked_add(window).ok_or(UrthrError::MathOverflow)?;
     claim.status = ClaimStatus::Pending;
     claim.bump = ctx.bumps.claim;
 

@@ -44,6 +44,8 @@ pub struct CreateCampaign<'info> {
 }
 
 pub fn handler(ctx: Context<CreateCampaign>, campaign_id: u64, price_per_event: u64) -> Result<()> {
+    require!(price_per_event > 0, UrthrError::InvalidPrice);
+
     let campaign = &mut ctx.accounts.campaign;
     campaign.advertiser = ctx.accounts.advertiser.key();
     campaign.escrow_vault = ctx.accounts.escrow_vault.key();

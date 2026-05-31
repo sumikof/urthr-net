@@ -30,6 +30,8 @@ pub enum UrthrError {
     ChallengeWindowClosed,
     #[msg("Campaign still has pending claims")]
     HasPendingClaims,
+    #[msg("Price per event must be greater than zero")]
+    InvalidPrice,
     #[msg("Arithmetic overflow")]
     MathOverflow,
 }
