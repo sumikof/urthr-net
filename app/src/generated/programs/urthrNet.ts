@@ -7,36 +7,177 @@
  */
 
 import {
+  assertIsInstructionWithAccounts,
   containsBytes,
   extendClient,
   fixEncoderSize,
   getBytesEncoder,
+  SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
   SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
   SOLANA_ERROR__PROGRAM_CLIENTS__UNRECOGNIZED_INSTRUCTION_TYPE,
   SolanaError,
   type Address,
+  type ClientWithRpc,
   type ClientWithTransactionPlanning,
   type ClientWithTransactionSending,
+  type GetAccountInfoApi,
+  type GetMultipleAccountsApi,
   type Instruction,
   type InstructionWithData,
   type ReadonlyUint8Array,
 } from "@solana/kit";
 import {
+  addSelfFetchFunctions,
   addSelfPlanAndSendFunctions,
+  type SelfFetchFunctions,
   type SelfPlanAndSendFunctions,
 } from "@solana/program-client-core";
 import {
-  getInitializeInstruction,
-  parseInitializeInstruction,
-  type InitializeInput,
-  type ParsedInitializeInstruction,
+  getCampaignCodec,
+  getClaimCodec,
+  getProtocolConfigCodec,
+  getPublisherCodec,
+  type Campaign,
+  type CampaignArgs,
+  type Claim,
+  type ClaimArgs,
+  type ProtocolConfig,
+  type ProtocolConfigArgs,
+  type Publisher,
+  type PublisherArgs,
+} from "../accounts";
+import {
+  getChallengeClaimInstruction,
+  getCloseCampaignInstructionAsync,
+  getCreateCampaignInstructionAsync,
+  getFundCampaignInstructionAsync,
+  getInitializeProtocolInstructionAsync,
+  getRegisterPublisherInstructionAsync,
+  getResolveClaimInstructionAsync,
+  getSettleClaimInstructionAsync,
+  getStakeInstructionAsync,
+  getSubmitClaimInstructionAsync,
+  getUnstakeInstructionAsync,
+  parseChallengeClaimInstruction,
+  parseCloseCampaignInstruction,
+  parseCreateCampaignInstruction,
+  parseFundCampaignInstruction,
+  parseInitializeProtocolInstruction,
+  parseRegisterPublisherInstruction,
+  parseResolveClaimInstruction,
+  parseSettleClaimInstruction,
+  parseStakeInstruction,
+  parseSubmitClaimInstruction,
+  parseUnstakeInstruction,
+  type ChallengeClaimInput,
+  type CloseCampaignAsyncInput,
+  type CreateCampaignAsyncInput,
+  type FundCampaignAsyncInput,
+  type InitializeProtocolAsyncInput,
+  type ParsedChallengeClaimInstruction,
+  type ParsedCloseCampaignInstruction,
+  type ParsedCreateCampaignInstruction,
+  type ParsedFundCampaignInstruction,
+  type ParsedInitializeProtocolInstruction,
+  type ParsedRegisterPublisherInstruction,
+  type ParsedResolveClaimInstruction,
+  type ParsedSettleClaimInstruction,
+  type ParsedStakeInstruction,
+  type ParsedSubmitClaimInstruction,
+  type ParsedUnstakeInstruction,
+  type RegisterPublisherAsyncInput,
+  type ResolveClaimAsyncInput,
+  type SettleClaimAsyncInput,
+  type StakeAsyncInput,
+  type SubmitClaimAsyncInput,
+  type UnstakeAsyncInput,
 } from "../instructions";
+import {
+  findCampaignPda,
+  findConfigPda,
+  findEscrowVaultPda,
+  findPublisherPda,
+  findStakeVaultPda,
+  findSubmitClaimPublisherPda,
+  findTreasuryPda,
+} from "../pdas";
 
 export const URTHR_NET_PROGRAM_ADDRESS =
-  "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR" as Address<"3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR">;
+  "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb" as Address<"8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb">;
+
+export enum UrthrNetAccount {
+  Campaign,
+  Claim,
+  ProtocolConfig,
+  Publisher,
+}
+
+export function identifyUrthrNetAccount(
+  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+): UrthrNetAccount {
+  const data = "data" in account ? account.data : account;
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([50, 40, 49, 11, 157, 220, 229, 192]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetAccount.Campaign;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([155, 70, 22, 176, 123, 215, 246, 102]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetAccount.Claim;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([207, 91, 250, 28, 152, 179, 215, 209]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetAccount.ProtocolConfig;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([86, 152, 93, 215, 234, 89, 232, 104]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetAccount.Publisher;
+  }
+  throw new SolanaError(
+    SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_ACCOUNT,
+    { accountData: data, programName: "urthrNet" },
+  );
+}
 
 export enum UrthrNetInstruction {
-  Initialize,
+  ChallengeClaim,
+  CloseCampaign,
+  CreateCampaign,
+  FundCampaign,
+  InitializeProtocol,
+  RegisterPublisher,
+  ResolveClaim,
+  SettleClaim,
+  Stake,
+  SubmitClaim,
+  Unstake,
 }
 
 export function identifyUrthrNetInstruction(
@@ -47,12 +188,122 @@ export function identifyUrthrNetInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237]),
+        new Uint8Array([231, 213, 62, 171, 50, 56, 168, 63]),
       ),
       0,
     )
   ) {
-    return UrthrNetInstruction.Initialize;
+    return UrthrNetInstruction.ChallengeClaim;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([65, 49, 110, 7, 63, 238, 206, 77]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.CloseCampaign;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([111, 131, 187, 98, 160, 193, 114, 244]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.CreateCampaign;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([109, 57, 56, 239, 99, 111, 221, 121]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.FundCampaign;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([188, 233, 252, 106, 134, 146, 202, 91]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.InitializeProtocol;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([144, 151, 194, 252, 185, 4, 145, 252]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.RegisterPublisher;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([63, 99, 216, 44, 183, 52, 190, 140]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.ResolveClaim;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([205, 203, 21, 66, 255, 231, 209, 155]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.SettleClaim;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([206, 176, 202, 18, 200, 209, 179, 108]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.Stake;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([163, 108, 111, 46, 220, 82, 77, 212]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.SubmitClaim;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([90, 95, 107, 42, 205, 124, 50, 225]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.Unstake;
   }
   throw new SolanaError(
     SOLANA_ERROR__PROGRAM_CLIENTS__FAILED_TO_IDENTIFY_INSTRUCTION,
@@ -61,20 +312,122 @@ export function identifyUrthrNetInstruction(
 }
 
 export type ParsedUrthrNetInstruction<
-  TProgram extends string = "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR",
-> = {
-  instructionType: UrthrNetInstruction.Initialize;
-} & ParsedInitializeInstruction<TProgram>;
+  TProgram extends string = "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb",
+> =
+  | ({
+      instructionType: UrthrNetInstruction.ChallengeClaim;
+    } & ParsedChallengeClaimInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.CloseCampaign;
+    } & ParsedCloseCampaignInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.CreateCampaign;
+    } & ParsedCreateCampaignInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.FundCampaign;
+    } & ParsedFundCampaignInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.InitializeProtocol;
+    } & ParsedInitializeProtocolInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.RegisterPublisher;
+    } & ParsedRegisterPublisherInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.ResolveClaim;
+    } & ParsedResolveClaimInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.SettleClaim;
+    } & ParsedSettleClaimInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.Stake;
+    } & ParsedStakeInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.SubmitClaim;
+    } & ParsedSubmitClaimInstruction<TProgram>)
+  | ({
+      instructionType: UrthrNetInstruction.Unstake;
+    } & ParsedUnstakeInstruction<TProgram>);
 
 export function parseUrthrNetInstruction<TProgram extends string>(
   instruction: Instruction<TProgram> & InstructionWithData<ReadonlyUint8Array>,
 ): ParsedUrthrNetInstruction<TProgram> {
   const instructionType = identifyUrthrNetInstruction(instruction);
   switch (instructionType) {
-    case UrthrNetInstruction.Initialize: {
+    case UrthrNetInstruction.ChallengeClaim: {
+      assertIsInstructionWithAccounts(instruction);
       return {
-        instructionType: UrthrNetInstruction.Initialize,
-        ...parseInitializeInstruction(instruction),
+        instructionType: UrthrNetInstruction.ChallengeClaim,
+        ...parseChallengeClaimInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.CloseCampaign: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.CloseCampaign,
+        ...parseCloseCampaignInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.CreateCampaign: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.CreateCampaign,
+        ...parseCreateCampaignInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.FundCampaign: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.FundCampaign,
+        ...parseFundCampaignInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.InitializeProtocol: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.InitializeProtocol,
+        ...parseInitializeProtocolInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.RegisterPublisher: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.RegisterPublisher,
+        ...parseRegisterPublisherInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.ResolveClaim: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.ResolveClaim,
+        ...parseResolveClaimInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.SettleClaim: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.SettleClaim,
+        ...parseSettleClaimInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.Stake: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.Stake,
+        ...parseStakeInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.SubmitClaim: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.SubmitClaim,
+        ...parseSubmitClaimInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.Unstake: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.Unstake,
+        ...parseUnstakeInstruction(instruction),
       };
     }
     default:
@@ -85,15 +438,82 @@ export function parseUrthrNetInstruction<TProgram extends string>(
   }
 }
 
-export type UrthrNetPlugin = { instructions: UrthrNetPluginInstructions };
-
-export type UrthrNetPluginInstructions = {
-  initialize: (
-    input: InitializeInput,
-  ) => ReturnType<typeof getInitializeInstruction> & SelfPlanAndSendFunctions;
+export type UrthrNetPlugin = {
+  accounts: UrthrNetPluginAccounts;
+  instructions: UrthrNetPluginInstructions;
+  pdas: UrthrNetPluginPdas;
 };
 
-export type UrthrNetPluginRequirements = ClientWithTransactionPlanning &
+export type UrthrNetPluginAccounts = {
+  campaign: ReturnType<typeof getCampaignCodec> &
+    SelfFetchFunctions<CampaignArgs, Campaign>;
+  claim: ReturnType<typeof getClaimCodec> &
+    SelfFetchFunctions<ClaimArgs, Claim>;
+  protocolConfig: ReturnType<typeof getProtocolConfigCodec> &
+    SelfFetchFunctions<ProtocolConfigArgs, ProtocolConfig>;
+  publisher: ReturnType<typeof getPublisherCodec> &
+    SelfFetchFunctions<PublisherArgs, Publisher>;
+};
+
+export type UrthrNetPluginInstructions = {
+  challengeClaim: (
+    input: ChallengeClaimInput,
+  ) => ReturnType<typeof getChallengeClaimInstruction> &
+    SelfPlanAndSendFunctions;
+  closeCampaign: (
+    input: CloseCampaignAsyncInput,
+  ) => ReturnType<typeof getCloseCampaignInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  createCampaign: (
+    input: CreateCampaignAsyncInput,
+  ) => ReturnType<typeof getCreateCampaignInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  fundCampaign: (
+    input: FundCampaignAsyncInput,
+  ) => ReturnType<typeof getFundCampaignInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  initializeProtocol: (
+    input: InitializeProtocolAsyncInput,
+  ) => ReturnType<typeof getInitializeProtocolInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  registerPublisher: (
+    input: RegisterPublisherAsyncInput,
+  ) => ReturnType<typeof getRegisterPublisherInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  resolveClaim: (
+    input: ResolveClaimAsyncInput,
+  ) => ReturnType<typeof getResolveClaimInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  settleClaim: (
+    input: SettleClaimAsyncInput,
+  ) => ReturnType<typeof getSettleClaimInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  stake: (
+    input: StakeAsyncInput,
+  ) => ReturnType<typeof getStakeInstructionAsync> & SelfPlanAndSendFunctions;
+  submitClaim: (
+    input: SubmitClaimAsyncInput,
+  ) => ReturnType<typeof getSubmitClaimInstructionAsync> &
+    SelfPlanAndSendFunctions;
+  unstake: (
+    input: UnstakeAsyncInput,
+  ) => ReturnType<typeof getUnstakeInstructionAsync> & SelfPlanAndSendFunctions;
+};
+
+export type UrthrNetPluginPdas = {
+  config: typeof findConfigPda;
+  campaign: typeof findCampaignPda;
+  escrowVault: typeof findEscrowVaultPda;
+  treasury: typeof findTreasuryPda;
+  publisher: typeof findPublisherPda;
+  stakeVault: typeof findStakeVaultPda;
+  submitClaimPublisher: typeof findSubmitClaimPublisherPda;
+};
+
+export type UrthrNetPluginRequirements = ClientWithRpc<
+  GetAccountInfoApi & GetMultipleAccountsApi
+> &
+  ClientWithTransactionPlanning &
   ClientWithTransactionSending;
 
 export function urthrNetProgram() {
@@ -102,12 +522,80 @@ export function urthrNetProgram() {
   ): Omit<T, "urthrNet"> & { urthrNet: UrthrNetPlugin } => {
     return extendClient(client, {
       urthrNet: <UrthrNetPlugin>{
+        accounts: {
+          campaign: addSelfFetchFunctions(client, getCampaignCodec()),
+          claim: addSelfFetchFunctions(client, getClaimCodec()),
+          protocolConfig: addSelfFetchFunctions(
+            client,
+            getProtocolConfigCodec(),
+          ),
+          publisher: addSelfFetchFunctions(client, getPublisherCodec()),
+        },
         instructions: {
-          initialize: (input) =>
+          challengeClaim: (input) =>
             addSelfPlanAndSendFunctions(
               client,
-              getInitializeInstruction(input),
+              getChallengeClaimInstruction(input),
             ),
+          closeCampaign: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCloseCampaignInstructionAsync(input),
+            ),
+          createCampaign: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getCreateCampaignInstructionAsync(input),
+            ),
+          fundCampaign: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getFundCampaignInstructionAsync(input),
+            ),
+          initializeProtocol: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getInitializeProtocolInstructionAsync(input),
+            ),
+          registerPublisher: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getRegisterPublisherInstructionAsync(input),
+            ),
+          resolveClaim: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getResolveClaimInstructionAsync(input),
+            ),
+          settleClaim: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getSettleClaimInstructionAsync(input),
+            ),
+          stake: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getStakeInstructionAsync(input),
+            ),
+          submitClaim: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getSubmitClaimInstructionAsync(input),
+            ),
+          unstake: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getUnstakeInstructionAsync(input),
+            ),
+        },
+        pdas: {
+          config: findConfigPda,
+          campaign: findCampaignPda,
+          escrowVault: findEscrowVaultPda,
+          treasury: findTreasuryPda,
+          publisher: findPublisherPda,
+          stakeVault: findStakeVaultPda,
+          submitClaimPublisher: findSubmitClaimPublisherPda,
         },
       },
     });

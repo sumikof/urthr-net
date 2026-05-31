@@ -1,7 +1,6 @@
 import { ConnectButton } from "./components/ConnectButton";
 import { AccountInfo } from "./components/AccountInfo";
 import { AirdropButton } from "./components/AirdropButton";
-import { InitializeButton } from "./components/InitializeButton";
 
 function App() {
   return (
@@ -18,7 +17,6 @@ function App() {
       </section>
       <section>
         <h2>プログラム</h2>
-        <InitializeButton />
       </section>
     </main>
   );

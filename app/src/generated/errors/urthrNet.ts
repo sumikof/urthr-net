@@ -14,15 +14,76 @@ import {
 } from "@solana/kit";
 import { URTHR_NET_PROGRAM_ADDRESS } from "../programs";
 
-/** CustomError: Custom error message */
-export const URTHR_NET_ERROR__CUSTOM_ERROR = 0x1770; // 6000
+/** Unauthorized: Signer is not authorized for this action */
+export const URTHR_NET_ERROR__UNAUTHORIZED = 0x1770; // 6000
+/** ProtocolPaused: Protocol is paused */
+export const URTHR_NET_ERROR__PROTOCOL_PAUSED = 0x1771; // 6001
+/** InvalidMint: Token mint does not match the protocol payment mint */
+export const URTHR_NET_ERROR__INVALID_MINT = 0x1772; // 6002
+/** InvalidFeeBps: Fee basis points exceed the denominator */
+export const URTHR_NET_ERROR__INVALID_FEE_BPS = 0x1773; // 6003
+/** InsufficientStake: Stake is below the minimum publisher stake */
+export const URTHR_NET_ERROR__INSUFFICIENT_STAKE = 0x1774; // 6004
+/** StakeLocked: Requested unstake would drop below locked stake or minimum */
+export const URTHR_NET_ERROR__STAKE_LOCKED = 0x1775; // 6005
+/** InsufficientBudget: Campaign budget is insufficient for this claim */
+export const URTHR_NET_ERROR__INSUFFICIENT_BUDGET = 0x1776; // 6006
+/** CampaignNotActive: Campaign is not active */
+export const URTHR_NET_ERROR__CAMPAIGN_NOT_ACTIVE = 0x1777; // 6007
+/** InvalidEventCount: Event count must be greater than zero */
+export const URTHR_NET_ERROR__INVALID_EVENT_COUNT = 0x1778; // 6008
+/** ClaimNotPending: Claim is not in the Pending state */
+export const URTHR_NET_ERROR__CLAIM_NOT_PENDING = 0x1779; // 6009
+/** ClaimNotChallenged: Claim is not in the Challenged state */
+export const URTHR_NET_ERROR__CLAIM_NOT_CHALLENGED = 0x177a; // 6010
+/** ChallengeWindowOpen: Challenge window is still open */
+export const URTHR_NET_ERROR__CHALLENGE_WINDOW_OPEN = 0x177b; // 6011
+/** ChallengeWindowClosed: Challenge window has closed */
+export const URTHR_NET_ERROR__CHALLENGE_WINDOW_CLOSED = 0x177c; // 6012
+/** HasPendingClaims: Campaign still has pending claims */
+export const URTHR_NET_ERROR__HAS_PENDING_CLAIMS = 0x177d; // 6013
+/** InvalidPrice: Price per event must be greater than zero */
+export const URTHR_NET_ERROR__INVALID_PRICE = 0x177e; // 6014
+/** MathOverflow: Arithmetic overflow */
+export const URTHR_NET_ERROR__MATH_OVERFLOW = 0x177f; // 6015
 
-export type UrthrNetError = typeof URTHR_NET_ERROR__CUSTOM_ERROR;
+export type UrthrNetError =
+  | typeof URTHR_NET_ERROR__CAMPAIGN_NOT_ACTIVE
+  | typeof URTHR_NET_ERROR__CHALLENGE_WINDOW_CLOSED
+  | typeof URTHR_NET_ERROR__CHALLENGE_WINDOW_OPEN
+  | typeof URTHR_NET_ERROR__CLAIM_NOT_CHALLENGED
+  | typeof URTHR_NET_ERROR__CLAIM_NOT_PENDING
+  | typeof URTHR_NET_ERROR__HAS_PENDING_CLAIMS
+  | typeof URTHR_NET_ERROR__INSUFFICIENT_BUDGET
+  | typeof URTHR_NET_ERROR__INSUFFICIENT_STAKE
+  | typeof URTHR_NET_ERROR__INVALID_EVENT_COUNT
+  | typeof URTHR_NET_ERROR__INVALID_FEE_BPS
+  | typeof URTHR_NET_ERROR__INVALID_MINT
+  | typeof URTHR_NET_ERROR__INVALID_PRICE
+  | typeof URTHR_NET_ERROR__MATH_OVERFLOW
+  | typeof URTHR_NET_ERROR__PROTOCOL_PAUSED
+  | typeof URTHR_NET_ERROR__STAKE_LOCKED
+  | typeof URTHR_NET_ERROR__UNAUTHORIZED;
 
 let urthrNetErrorMessages: Record<UrthrNetError, string> | undefined;
 if (process.env["NODE_ENV"] !== "production") {
   urthrNetErrorMessages = {
-    [URTHR_NET_ERROR__CUSTOM_ERROR]: `Custom error message`,
+    [URTHR_NET_ERROR__CAMPAIGN_NOT_ACTIVE]: `Campaign is not active`,
+    [URTHR_NET_ERROR__CHALLENGE_WINDOW_CLOSED]: `Challenge window has closed`,
+    [URTHR_NET_ERROR__CHALLENGE_WINDOW_OPEN]: `Challenge window is still open`,
+    [URTHR_NET_ERROR__CLAIM_NOT_CHALLENGED]: `Claim is not in the Challenged state`,
+    [URTHR_NET_ERROR__CLAIM_NOT_PENDING]: `Claim is not in the Pending state`,
+    [URTHR_NET_ERROR__HAS_PENDING_CLAIMS]: `Campaign still has pending claims`,
+    [URTHR_NET_ERROR__INSUFFICIENT_BUDGET]: `Campaign budget is insufficient for this claim`,
+    [URTHR_NET_ERROR__INSUFFICIENT_STAKE]: `Stake is below the minimum publisher stake`,
+    [URTHR_NET_ERROR__INVALID_EVENT_COUNT]: `Event count must be greater than zero`,
+    [URTHR_NET_ERROR__INVALID_FEE_BPS]: `Fee basis points exceed the denominator`,
+    [URTHR_NET_ERROR__INVALID_MINT]: `Token mint does not match the protocol payment mint`,
+    [URTHR_NET_ERROR__INVALID_PRICE]: `Price per event must be greater than zero`,
+    [URTHR_NET_ERROR__MATH_OVERFLOW]: `Arithmetic overflow`,
+    [URTHR_NET_ERROR__PROTOCOL_PAUSED]: `Protocol is paused`,
+    [URTHR_NET_ERROR__STAKE_LOCKED]: `Requested unstake would drop below locked stake or minimum`,
+    [URTHR_NET_ERROR__UNAUTHORIZED]: `Signer is not authorized for this action`,
   };
 }
 
