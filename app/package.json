@@ -13,6 +13,8 @@
     "verify:initialize": "node scripts/verify-initialize.mjs"
   },
   "dependencies": {
+    "@solana-program/system": "^0.12.2",
+    "@solana-program/token": "^0.13.0",
     "@solana/client": "^1.7.0",
     "@solana/kit": "^6.9.0",
     "@solana/program-client-core": "^6.9.0",

@@ -6,9 +6,10 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from "./accounts";
-export * from "./errors";
-export * from "./instructions";
-export * from "./pdas";
-export * from "./programs";
-export * from "./types";
+export * from "./campaign";
+export * from "./config";
+export * from "./escrowVault";
+export * from "./publisher";
+export * from "./stakeVault";
+export * from "./submitClaimPublisher";
+export * from "./treasury";

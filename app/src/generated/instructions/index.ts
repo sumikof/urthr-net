@@ -6,4 +6,14 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from "./initialize";
+export * from "./challengeClaim";
+export * from "./closeCampaign";
+export * from "./createCampaign";
+export * from "./fundCampaign";
+export * from "./initializeProtocol";
+export * from "./registerPublisher";
+export * from "./resolveClaim";
+export * from "./settleClaim";
+export * from "./stake";
+export * from "./submitClaim";
+export * from "./unstake";
