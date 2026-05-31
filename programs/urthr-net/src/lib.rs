@@ -25,4 +25,8 @@ pub mod urthr_net {
     ) -> Result<()> {
         initialize_protocol::handler(ctx, attestor, protocol_fee_bps, min_publisher_stake, challenge_window)
     }
+
+    pub fn register_publisher(ctx: Context<RegisterPublisher>, metadata: [u8; 32]) -> Result<()> {
+        register_publisher::handler(ctx, metadata)
+    }
 }
