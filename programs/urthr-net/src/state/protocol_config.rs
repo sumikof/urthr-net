@@ -9,7 +9,7 @@ pub struct ProtocolConfig {
     pub treasury: Pubkey,
     pub protocol_fee_bps: u16,
     pub min_publisher_stake: u64,
-    pub challenge_window: i64,
+    pub challenge_window: u64,
     pub paused: bool,
     pub bump: u8,
 }

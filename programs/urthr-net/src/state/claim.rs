@@ -13,6 +13,7 @@ pub enum ClaimStatus {
 pub struct Claim {
     pub campaign: Pubkey,
     pub publisher: Pubkey,
+    pub claim_nonce: u64,
     pub event_count: u64,
     pub amount: u64,
     pub merkle_root: [u8; 32],
