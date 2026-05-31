@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use crate::constants::*;
 use crate::error::UrthrError;
 use crate::state::{Claim, ClaimStatus};
 
@@ -7,7 +8,11 @@ pub struct ChallengeClaim<'info> {
     #[account(mut)]
     pub challenger: Signer<'info>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [CLAIM_SEED, claim.campaign.as_ref(), &claim.claim_nonce.to_le_bytes()],
+        bump = claim.bump,
+    )]
     pub claim: Account<'info, Claim>,
 }
 

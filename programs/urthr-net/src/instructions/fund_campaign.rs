@@ -12,6 +12,7 @@ pub struct FundCampaign<'info> {
         seeds = [CONFIG_SEED],
         bump = config.bump,
         has_one = payment_mint @ UrthrError::InvalidMint,
+        constraint = !config.paused @ UrthrError::ProtocolPaused,
     )]
     pub config: Account<'info, ProtocolConfig>,
 
