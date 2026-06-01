@@ -5,6 +5,16 @@
 
 本レポートは所見の提示のみで、コードは変更していない。修正は後続タスクで実施する。
 
+## 対応状況（2026-06-01 承認後）
+
+ユーザ承認により以下を修正済み（`feat/review-cleanup`）:
+
+- **O-01 — 対応済み**: admin 署名の `set_paused(bool)` 命令を新設し、緊急停止を実効化（パネル `SetPausedPanel` 追加・LiteSVM テスト3件追加）。
+- **O-02 — 対応済み**: `initialize_protocol` を program の upgrade authority に制約（`program`/`program_data` アカウント追加、front-run 乗っ取り防止、否定テスト追加）。
+- **O-04 — 対応済み**: `escrow_vault`/`stake_vault` に `token::mint = payment_mint` 制約を追加（defense-in-depth）。
+
+見送り（今回スコープ外）: **O-03**（close_campaign の rent 常駐）、**O-05**（unstake エラー意味付け）、**O-06**（自己チャレンジ禁止）、**A-01**（stale simulation UI）、**A-02**（reset 導線）、**A-03**（デッドコード `RENT_SYSVAR_ADDRESS`）。
+
 ## オンチェーン (Rust / Anchor)
 
 ### 所見
