@@ -25,7 +25,7 @@ pub struct Stake<'info> {
     )]
     pub publisher: Account<'info, Publisher>,
 
-    #[account(mut)]
+    #[account(mut, token::mint = payment_mint)]
     pub stake_vault: Account<'info, TokenAccount>,
 
     #[account(mut, token::mint = payment_mint, token::authority = authority)]

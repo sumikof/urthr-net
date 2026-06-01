@@ -32,7 +32,7 @@ pub struct SettleClaim<'info> {
     )]
     pub claim: Box<Account<'info, Claim>>,
 
-    #[account(mut)]
+    #[account(mut, token::mint = payment_mint)]
     pub escrow_vault: Box<Account<'info, TokenAccount>>,
 
     #[account(mut)]
