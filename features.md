@@ -33,9 +33,9 @@
 
 ### A1. 管理命令群（admin instructions） — P0 / ⚠️現状ギャップ
 
-- **目的:** `ProtocolConfig` は `initialize_protocol` で各値を設定するが、**初期化後に変更する命令が一切存在しない**。
-  特に `paused` フラグは緊急停止のために用意されているのに**切り替え手段が無く**、現状では一度も停止/再開できない。
-  attestor の交代、手数料・最低ステーク額の調整も不可能。運用に必須。
+- **目的:** `ProtocolConfig` は `initialize_protocol` で各値を設定するが、**初期化後に変更する命令がほとんど存在しない**。
+  `paused` フラグの切り替えは `set_paused`（admin署名）で**実装済み**となり緊急停止が実効化されたが、
+  attestor の交代、手数料・最低ステーク額の調整は依然として不可能。運用に必須。
 - **受け入れ条件:**
   - `set_paused(paused: bool)`（admin署名）で `config.paused` を切り替えられる。（`set_paused` は実装済み。残りは未実装）
   - `update_attestor(new: Pubkey)`（admin署名）で attestor を交代できる。
@@ -116,7 +116,7 @@
   プログラムと通信できるようにする。手書きの命令組み立てを排除し一貫性を担保。
 - **受け入れ条件:**
   - `urthr_net` の IDL から `@solana/kit` ベースの型付きクライアントを生成（`clients/` 配下）。
-  - 全11命令（＋A1で追加する管理命令）のビルダーと、4アカウントのデコーダを提供。
+  - 全12命令（＋A1で追加する管理命令）のビルダーと、4アカウントのデコーダを提供。
   - PDA 導出ヘルパ（config / publisher / stake_vault / campaign / escrow_vault / claim）。
   - 簡単なスモーク（命令組み立て＋デコード）のテスト。
 - **依存関係:** A2（イベント購読を含めるなら）。コアIDLが必要。
