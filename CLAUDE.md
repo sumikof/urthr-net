@@ -33,6 +33,16 @@
   - `tests/lifecycle.mjs`（`pnpm test:integration`）は surfnet スモークのみ（該当 program キーペアが無く declared id へデプロイできないため）。
 - **フロントエンド（`app/`）:** `cd app && pnpm build && pnpm test && pnpm lint`。生成コード（`app/src/generated`）は lint 対象外。
 
+## 既知の制約: kit バージョン乖離（送信経路）
+
+`@solana/client` は **kit 5.5.1** を同梱する一方、アプリと生成コードは **kit 6.9.0** を使う。この乖離が送信経路で複数の落とし穴を生む（対症的に対処済み、根本一本化は 5.x↔6.x API 差で client を壊すリスクが高いため見送り）:
+
+- **署名 dedup は参照比較（5.5.1）**：同一アドレスに異なる `TransactionSigner` インスタンスが2つあると throw。ウォレットは fee payer 兼署名アカウントなので、**`build` に渡す `signer` と同一インスタンスを fee payer にする**（`app/src/debug/core/prepareOptions.ts` の `runnerPrepareOptions`）。`pool.prepare` に `feePayer: wallet.account.address` を渡してはいけない。
+- **RPC レスポンスの整数は bigint 化**：エラーやアカウントを表示する際は素の `JSON.stringify` ではなく `app/src/lib/json.ts` の `stringifyWithBigInt` を使う。
+- **送信失敗は汎用 wrapper で包まれる**：`transactionPlanResult` から実エラー・ログを取り出す（`app/src/lib/txError.ts` の `describeTransactionError`）。
+
+新しいパネル／送信フローを足すときは、これらの共有ヘルパ経由にすること。
+
 ## セキュリティ（solana-dev ガードレール）
 
 - 既定 cluster は **localnet/devnet**。mainnet は対象外（明示確認なしに使わない）。
