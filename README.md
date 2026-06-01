@@ -24,7 +24,7 @@ spec: [`docs/superpowers/specs/2026-05-31-urthr-net-protocol-core-design.md`](do
 ## Tech stack
 
 - **Program:** Anchor 1.0.2 (Rust), program `urthr_net`
-  (`3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR`)
+  (`8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb`)
 - **Payments:** SPL Token, single configurable mint (USDC-like)
 - **Tests:** LiteSVM (Rust, in-process, real SPL Token program) + a Surfpool integration smoke test
 - **Frontend:** Vite + React + `@solana/client` / `@solana/react-hooks` — a localnet

@@ -17,12 +17,11 @@
 //   submit_claim -> challenge_claim -> resolve_claim(fraud=true)      (slash path)
 //   submit -> settle -> close_campaign                               (refund path)
 //
-// A full on-chain E2E against a surfnet additionally requires deploying the program
-// at its declared id (`3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR`). The repo's
-// current `target/deploy` keypair does not match that id, so a real deploy needs the
-// matching program keypair (or `anchor keys sync` to rotate the id) — a deploy-time
-// concern out of scope for this protocol-core milestone. When that keypair is
-// available (e.g. in CI), extend this script with the lifecycle flows above using a
+// A full on-chain E2E against a surfnet additionally requires the program deployed
+// at its id (`8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb` — matches `declare_id!`,
+// Anchor.toml, the `target/deploy` keypair, the IDL, and the generated client).
+// Deploy via the surfpool runbook (`surfpool start --watch` redeploys on rebuild).
+// Once deployed, extend this script with the lifecycle flows above using a
 // generated `@solana/kit` client.
 //
 // USAGE
@@ -32,7 +31,7 @@
 //   RPC_URL=http://127.0.0.1:8899 node tests/lifecycle.mjs
 
 const RPC_URL = process.env.RPC_URL ?? "http://127.0.0.1:8899";
-const PROGRAM_ID = "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR";
+const PROGRAM_ID = "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb";
 
 async function rpc(method, params = []) {
   const res = await fetch(RPC_URL, {

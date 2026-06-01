@@ -22,7 +22,7 @@ import {
 
 const RPC_URL = process.env.VITE_RPC_URL ?? "http://127.0.0.1:8899";
 const WS_URL = process.env.VITE_WS_URL ?? "ws://127.0.0.1:8900";
-const PROGRAM_ID = "3CmDt8Rps32EUpnDp9aDWq9GuwZ6WpTp8YxxMLFDRPoR";
+const PROGRAM_ID = "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb";
 // Anchor discriminator for `initialize` (from target/idl/urthr_net.json), no args/accounts.
 const INITIALIZE_DISCRIMINATOR = new Uint8Array([175, 175, 109, 31, 13, 152, 155, 237]);
 

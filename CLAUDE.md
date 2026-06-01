@@ -28,7 +28,7 @@
 ## ビルド／テストの正
 
 - **オンチェーン（Rust / Anchor）:**
-  - ビルド: `NO_DNA=1 anchor build --ignore-keys`（`target/deploy` のキーペアが `declare_id!` と不一致のため `--ignore-keys` 必須。`anchor keys sync` は使わない＝コミット済み program id を書き換えてしまう）。
+  - ビルド: `NO_DNA=1 anchor build`。program id は `8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb` で `declare_id!` / `Anchor.toml` / `target/deploy/urthr_net-keypair.json` / IDL / 生成クライアントすべて一致（旧 `3CmD…` は stale だったため 2026-06-01 に鍵 `8CsD…` へ統一）。鍵と declare_id が一致するので `--ignore-keys` は不要。
   - **正当性の正ゲート: `cargo test -p urthr-net`（LiteSVM、実 SPL Token プログラムを in-process 実行）。** これがプロトコルの correctness を保証する。
   - `tests/lifecycle.mjs`（`pnpm test:integration`）は surfnet スモークのみ（該当 program キーペアが無く declared id へデプロイできないため）。
 - **フロントエンド（`app/`）:** `cd app && pnpm build && pnpm test && pnpm lint`。生成コード（`app/src/generated`）は lint 対象外。
