@@ -4,6 +4,7 @@ import { AirdropButton } from "./components/AirdropButton";
 import { CreateMintPanel } from "./debug/localnet/CreateMintPanel";
 import { MintToPanel } from "./debug/localnet/MintToPanel";
 import { InitializeProtocolPanel } from "./debug/instructions/InitializeProtocolPanel";
+import { SetPausedPanel } from "./debug/instructions/SetPausedPanel";
 import { RegisterPublisherPanel } from "./debug/instructions/RegisterPublisherPanel";
 import { StakePanel } from "./debug/instructions/StakePanel";
 import { UnstakePanel } from "./debug/instructions/UnstakePanel";
@@ -40,6 +41,7 @@ function App() {
       <section>
         <h2>プロトコル設定</h2>
         <InitializeProtocolPanel />
+        <SetPausedPanel />
         <ProtocolConfigInspector />
       </section>
       <section>

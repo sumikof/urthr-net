@@ -54,6 +54,7 @@ import {
   getInitializeProtocolInstructionAsync,
   getRegisterPublisherInstructionAsync,
   getResolveClaimInstructionAsync,
+  getSetPausedInstructionAsync,
   getSettleClaimInstructionAsync,
   getStakeInstructionAsync,
   getSubmitClaimInstructionAsync,
@@ -65,6 +66,7 @@ import {
   parseInitializeProtocolInstruction,
   parseRegisterPublisherInstruction,
   parseResolveClaimInstruction,
+  parseSetPausedInstruction,
   parseSettleClaimInstruction,
   parseStakeInstruction,
   parseSubmitClaimInstruction,
@@ -81,12 +83,14 @@ import {
   type ParsedInitializeProtocolInstruction,
   type ParsedRegisterPublisherInstruction,
   type ParsedResolveClaimInstruction,
+  type ParsedSetPausedInstruction,
   type ParsedSettleClaimInstruction,
   type ParsedStakeInstruction,
   type ParsedSubmitClaimInstruction,
   type ParsedUnstakeInstruction,
   type RegisterPublisherAsyncInput,
   type ResolveClaimAsyncInput,
+  type SetPausedAsyncInput,
   type SettleClaimAsyncInput,
   type StakeAsyncInput,
   type SubmitClaimAsyncInput,
@@ -174,6 +178,7 @@ export enum UrthrNetInstruction {
   InitializeProtocol,
   RegisterPublisher,
   ResolveClaim,
+  SetPaused,
   SettleClaim,
   Stake,
   SubmitClaim,
@@ -265,6 +270,17 @@ export function identifyUrthrNetInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([91, 60, 125, 192, 176, 225, 166, 218]),
+      ),
+      0,
+    )
+  ) {
+    return UrthrNetInstruction.SetPaused;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([205, 203, 21, 66, 255, 231, 209, 155]),
       ),
       0,
@@ -336,6 +352,9 @@ export type ParsedUrthrNetInstruction<
       instructionType: UrthrNetInstruction.ResolveClaim;
     } & ParsedResolveClaimInstruction<TProgram>)
   | ({
+      instructionType: UrthrNetInstruction.SetPaused;
+    } & ParsedSetPausedInstruction<TProgram>)
+  | ({
       instructionType: UrthrNetInstruction.SettleClaim;
     } & ParsedSettleClaimInstruction<TProgram>)
   | ({
@@ -400,6 +419,13 @@ export function parseUrthrNetInstruction<TProgram extends string>(
       return {
         instructionType: UrthrNetInstruction.ResolveClaim,
         ...parseResolveClaimInstruction(instruction),
+      };
+    }
+    case UrthrNetInstruction.SetPaused: {
+      assertIsInstructionWithAccounts(instruction);
+      return {
+        instructionType: UrthrNetInstruction.SetPaused,
+        ...parseSetPausedInstruction(instruction),
       };
     }
     case UrthrNetInstruction.SettleClaim: {
@@ -484,6 +510,10 @@ export type UrthrNetPluginInstructions = {
     input: ResolveClaimAsyncInput,
   ) => ReturnType<typeof getResolveClaimInstructionAsync> &
     SelfPlanAndSendFunctions;
+  setPaused: (
+    input: SetPausedAsyncInput,
+  ) => ReturnType<typeof getSetPausedInstructionAsync> &
+    SelfPlanAndSendFunctions;
   settleClaim: (
     input: SettleClaimAsyncInput,
   ) => ReturnType<typeof getSettleClaimInstructionAsync> &
@@ -566,6 +596,11 @@ export function urthrNetProgram() {
             addSelfPlanAndSendFunctions(
               client,
               getResolveClaimInstructionAsync(input),
+            ),
+          setPaused: (input) =>
+            addSelfPlanAndSendFunctions(
+              client,
+              getSetPausedInstructionAsync(input),
             ),
           settleClaim: (input) =>
             addSelfPlanAndSendFunctions(
