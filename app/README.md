@@ -23,7 +23,6 @@
 ## Phantom を localnet に向ける
 1. Phantom → 設定 → Developer Settings → Change Network → Custom RPC
 2. RPC URL に `http://127.0.0.1:8899` を設定（Cluster: Custom/Localnet）
-3. RPC URL に `http://127.0.0.1:8899` を設定（Cluster: Custom/Localnet）
 
 ## デバッグハーネスの使い方（localnet 全機能フロー）
 
