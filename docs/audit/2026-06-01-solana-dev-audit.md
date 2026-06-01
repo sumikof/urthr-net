@@ -34,3 +34,47 @@
 - OK: Token-2022 前提（#9, security.md #15）— `anchor_spl::token::{Token, TokenAccount, transfer_checked}` を使用し SPL classic 前提。ARCHITECTURE.md で単一 SPL mint 運用を明記、Token-2022 は post-MVP ロードマップ。現状の単一 classic mint 運用では transfer-fee/permanent-delegate 等の Token-2022 リスクは対象外。
 - OK: revival/double-close（#6, security.md #8）— `close_campaign` は実際には close せず（O-03）、再実行は `status == Active` 制約で拒否されるため、closed-account revival 経路は存在しない。claim/campaign の状態遷移は status ガード（ClaimNotPending/ClaimNotChallenged 等）で冪等性を担保。
 - OK: sysvar（security.md #10/#13）— 時刻取得は `Clock::get()`（submit_claim.rs:69, challenge_claim.rs:22, settle_claim.rs:58）で canonical sysvar を検証。Anchor の `Sysvar<'info, Rent>` も init 命令で型付き。
+
+## app (kit / フロントエンド)
+
+対象: `app/src/`（React + Vite localnet デバッグハーネス）。命令パネル 11 個（`debug/instructions/*.tsx`、オンチェーン命令と 1:1）＋ localnet ヘルパ 2 個（`debug/localnet/*.tsx`）＝ 計 13 個が共通の `DebugPanel`/`useInstructionRunner` を経由。account インスペクタ 4 種＋汎用 `AccountInspector`。監査基準は CLAUDE.md の「パネル契約」「kit バージョン乖離の共有ヘルパ経由」「送信前シミュレーション必須」不変条件。
+
+### 所見
+
+| ID | レイヤー | file:line | 重要度 | 内容 | 推奨修正 |
+|----|---------|-----------|--------|------|----------|
+| A-01 | app | useInstructionRunner.ts:111-123 / DebugPanel.tsx:57-76 | 低 | シミュレーション後に入力を変更しても `summary`/`canSend` が `simulated` のまま残り、ユーザが古いシミュレーション結果のまま「承認して送信」を押せる（`build` は送信時ではなく `simulate` 時にのみ実行されプール済み tx を送るため、表示中の入力ではなく直前にシミュレートした内容が送られる）。送信内容＝シミュレート内容なので不変条件（シミュレート済みのものだけ送信）自体は守られるが、UI 上の入力と乖離し得る。 | パネル入力 (`children` の値) 変更時に `runner.reset()` を呼ぶ、または `DebugPanel` に入力変更を検知して `simulated`→`idle` へ戻す仕組みを追加。最小対応として「送信は直近シミュレート時の入力が対象」と UI に明示。 |
+| A-02 | app | DebugPanel.tsx:30-98 / useInstructionRunner.ts:75-81 | 低 | `useInstructionRunner` は `reset()` を公開するが `DebugPanel` がどこからも呼ばず、エラー/送信完了後に状態をクリアする UI が無い。`error`/`sent` 表示後の再操作は「シミュレート」再押下に依存（再シミュレートで内部状態は上書きされるため実害は小）。 | `DebugPanel` に「リセット」ボタンを足して `runner.reset()` を配線するか、`phase==="sent"|"error"` で簡易リセット導線を提示。 |
+| A-03 | app | core/programs.ts:7-10 | 低 | `RENT_SYSVAR_ADDRESS` を export しているが、現行 11 パネルはいずれも rent sysvar を明示的に渡さない（生成クライアントが解決）。デッドコードで、誤って手動配線する温床になり得る。 | 不要なら削除。将来必要なら使用箇所と同時に復活させる。 |
+
+### 網羅メモ (所見なしの観点)
+
+- OK: 共有 prepare ヘルパ（#1）— 全送信は `useInstructionRunner` 経由で `pool.prepare(runnerPrepareOptions(signer, wallet))` を呼ぶ（useInstructionRunner.ts:103）。`runnerPrepareOptions` は `{ feePayer: signer, authority: wallet }` を返し（prepareOptions.ts:24）、fee payer は `build` に渡す signer と同一インスタンス。kit 5.5.1 の参照比較 dedup を満たす（prepareOptions.test.ts:27,34 で回帰固定）。
+- OK: feePayer にアドレスを渡さない（#1）— `src` 全体（生成コード除く）で `feePayer:` は `prepareOptions.ts` とそのテストのみ。`pool.prepare` に `feePayer: wallet.account.address` を渡す箇所は存在しない（grep 済み）。
+- OK: bigint 安全な stringify（#1）— RPC データ表示は全て `stringifyWithBigInt`（useInstructionRunner.ts:120 のシミュレーション err、AccountInspector.tsx:80 のアカウント data）。生成コード以外で素の `JSON.stringify` を RPC レスポンス/エラーに適用する箇所は無い（唯一の `JSON.stringify` は `lib/json.ts:10` のラッパ実装本体）。
+- OK: 送信エラーの unwrap（#1）— 送信/シミュレーション例外は `errMessage`→`describeTransactionError`（useInstructionRunner.ts:46,126,147）で `transactionPlanResult` の失敗 leaf とプログラムログまで展開（txError.ts:16-63、txError.test.ts で回帰固定）。
+- OK: シミュレート→承認→送信 不変条件（#2）— 全 13 パネルが `DebugPanel` を使用（instructions/*.tsx 各 build= の親、localnet/*.tsx も同様）。`send()` は `phase !== "simulated"` を弾き（useInstructionRunner.ts:135-139）、送信ボタンは `canSend=(phase==="simulated")` でのみ活性（DebugPanel.tsx:51, useInstructionRunner.ts:158）。シミュレーションは送信前に必ず実行され、err/CU/logs を要約表示（DebugPanel.tsx:57-76）。バイパス経路なし。
+- OK: シミュレーション要約の提示（#2）— err（成功/失敗）、`unitsConsumed`（CU）、`logs` を `DebugPanel` が表示（DebugPanel.tsx:59-74）。失敗時は `phase="error"`＋bigint 安全なエラー文字列（useInstructionRunner.ts:116-120）。
+- OK: permissionless 命令の signer 扱い（#2,#5）— `settle_claim` は signer アカウントを持たず `build` で `void signer`（SettleClaimPanel.tsx:32）。fee payer（ウォレット）が署名する設計に一致し、不要な signer を埋め込まない。
+- OK: 生成クライアント ↔ IDL 整合（#3）— `pnpm codegen` 実行後 `git diff --stat src/generated` 差分なし（クリーン）。生成物の改変残渣なし（`git status --porcelain` 空）。
+- OK: cluster 既定（#4）— `lib/rpc.ts:1-2` で既定 `http://127.0.0.1:8899` / `ws://127.0.0.1:8900`（localnet）。`VITE_RPC_URL`/`VITE_WS_URL` で上書き可。mainnet ハードコードなし。`providers.tsx` は `autoDiscover()` で wallet-standard コネクタ列挙、秘密鍵保持なし。
+- OK: 秘密鍵を保存しない（#4, security ガードレール）— 署名はウォレット（`createWalletTransactionSigner(wallet)`、useInstructionRunner.ts:71）に委譲。`CreateMintPanel` の ad-hoc mint 鍵は `generateKeyPairSigner()` で生成しメモリ上のみ・永続化なし（CreateMintPanel.tsx:35）。秘密鍵/シードの localStorage 等への保存は無い。
+- OK: 未信頼オンチェーンデータの扱い（#4）— アカウント表示は全て生成 `fetchMaybe*`（discriminator 検証付きデコーダ）経由で `exists` 判定後に表示（AccountInspector.tsx:73-81、各 Inspector は `fetchMaybeCampaign`/`Claim`/`Publisher`/`ProtocolConfig`）。`SubmitClaimPanel` の nonce も生成 `fetchCampaign` でデコードした `claimsCount` を使用（SubmitClaimPanel.tsx:39-40）。生バイト直読みなし。
+- OK: PDA/ATA 導出（パネル契約）— PDA は `core/pdas.ts` の集中導出（canonical、seed は CLAUDE.md/オンチェーンと一致）、ATA は `client.splToken({ mint }).deriveAssociatedTokenAddress(owner)`（stake/unstake/fund/close/settle/resolve）または `findAssociatedTokenPda`（MintTo）。手動 seed 組み立ての散在なし。
+- OK: 型付き入力（パネル契約）— 全パネルが `core/fields.tsx` の `parseU64`/`parseU16`/`parseBytes32Hex`/`parsePubkey`＋`TextField` を使用し、未パース時は `disabled` でシミュレート/送信を抑止。`create_campaign` は `price>0` をクライアント側でも弾く（CreateCampaignPanel.tsx:19-20、オンチェーン InvalidPrice と整合）。
+- OK: エラー握り潰しなし（#5）— 全 `catch` は `setError`/`setMessage`/`setState({kind:"error"})` でメッセージを surface（AirdropButton.tsx:22, MintToPanel.tsx:43, AccountInspector.tsx:82, useInstructionRunner.ts:124,145）。空 catch は `parsePubkey`（fields.tsx:27、パース失敗を `{ok:false}` に正規化する正当な用途）のみ。
+- OK: コンポーネントのエラー表示（#1 適用範囲）— `AirdropButton`/`MintToPanel` 残高取得の catch は RPC レスポンス JSON ではなく投げられた `Error` の `message` を表示するため `stringifyWithBigInt` 不要（bigint を含む RPC 値を stringify していない）。
+
+## サマリ
+
+- 重要度別件数（オンチェーン O-xx ＋ app A-xx 合算）: 高 0 / 中 3 / 低 6
+  - 中（3）: O-01, O-02, O-03（いずれもオンチェーンの堅牢性/運用）
+  - 低（6）: O-04, O-05, O-06, A-01, A-02, A-03
+- 推奨対応順:
+  1. O-02（permissionless initialize のフロントラン乗っ取り。運用/制約のいずれかで早急に対処、最低でも docs 明記）
+  2. O-01（paused を立てる admin 命令が無く緊急停止が実効しない。設計意図との不整合）
+  3. O-03（close_campaign が実際には close せず rent 常駐。命令名/docs と実態の整合 or 真の close 実装）
+  4. O-04（vault に `token::mint` 明示制約を追加、defense-in-depth）
+  5. A-01（シミュレート後の入力変更で stale シミュレーション送信を防ぐ UI 改善）
+  6. A-02 / A-03 / O-05 / O-06（UI リセット導線・デッドコード削除・エラー意味付け・自己チャレンジ禁止。スタイル/軽微）
+- 補足: 正当性（correctness）に直結する 高 重要度の所見は onchain/app ともに無し。オンチェーンの不変条件（escrow balance == budget_remaining + locked_budget）と署名者/PDA/算術/CPI の各検証は満たされ（O-xx 網羅メモ参照）、app は CLAUDE.md のパネル契約・kit 乖離共有ヘルパ・シミュレート必須不変条件をすべて遵守している。
