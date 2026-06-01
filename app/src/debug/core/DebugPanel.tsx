@@ -82,7 +82,14 @@ export function DebugPanel({ title, children, build, disabled }: DebugPanelProps
       )}
 
       {error && phase === "error" && (
-        <p style={{ color: "crimson", marginTop: "0.5rem", wordBreak: "break-all" }}>
+        <p
+          style={{
+            color: "crimson",
+            marginTop: "0.5rem",
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap",
+          }}
+        >
           エラー: {error}
         </p>
       )}

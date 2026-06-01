@@ -3,6 +3,7 @@ import { useSolanaClient } from "@solana/react-hooks";
 import { type Address } from "@solana/kit";
 import { fetchMaybeProtocolConfig } from "../../generated";
 import { TextField, parsePubkey } from "../core/fields";
+import { stringifyWithBigInt } from "../../lib/json";
 
 // The rpc type the generated fetchers accept; derived from a fetcher's first arg
 // so it stays in sync with codama output rather than being hand-written.
@@ -76,11 +77,7 @@ export function AccountInspector({
       }
       // All on-chain data is treated as untrusted; it is only surfaced after the
       // generated decoder validated the discriminator inside fetchMaybe.
-      const json = JSON.stringify(
-        acc.data,
-        (_k, v) => (typeof v === "bigint" ? v.toString() : v),
-        2,
-      );
+      const json = stringifyWithBigInt(acc.data, 2);
       setState({ kind: "ok", json });
     } catch (err) {
       setState({

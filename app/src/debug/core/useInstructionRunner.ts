@@ -2,6 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useSolanaClient, useTransactionPool, useWalletConnection } from "@solana/react-hooks";
 import { createWalletTransactionSigner } from "@solana/client";
 import type { Base64EncodedWireTransaction, Instruction, TransactionSigner } from "@solana/kit";
+import { runnerPrepareOptions } from "./prepareOptions";
+import { stringifyWithBigInt } from "../../lib/json";
+import { describeTransactionError } from "../../lib/txError";
 
 /** What a panel's `build` callback must produce: a fully-formed instruction with
  *  its signer account(s) populated by the supplied wallet-derived signer. */
@@ -38,7 +41,9 @@ export type InstructionRunner = Readonly<{
 }>;
 
 function errMessage(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  // Unwraps kit's generic "transaction plan failed to execute" wrapper to the
+  // real underlying cause (and on-chain logs) — see describeTransactionError.
+  return describeTransactionError(e);
 }
 
 /**
@@ -92,8 +97,10 @@ export function useInstructionRunner(): InstructionRunner {
         pool.clearInstructions();
         for (const ix of arr) pool.addInstruction(ix);
         // Prepare with the wallet as fee payer/authority so the pooled, prepared
-        // transaction is ready for `send()` after approval.
-        await pool.prepare({ feePayer: wallet.account.address, authority: wallet });
+        // transaction is ready for `send()` after approval. The fee payer is the
+        // SAME `signer` instance embedded by `build` above — see
+        // `runnerPrepareOptions` for why the instance (not the address) matters.
+        await pool.prepare(runnerPrepareOptions(signer, wallet));
         // `toWire` returns a base64 string; the simulate RPC wants the branded
         // Base64EncodedWireTransaction. `replaceRecentBlockhash` (which implies
         // sigVerify=false) lets us simulate without fully-signed signatures.
@@ -108,7 +115,9 @@ export function useInstructionRunner(): InstructionRunner {
         });
         if (value.err) {
           setPhase("error");
-          setError(`シミュレーション失敗: ${JSON.stringify(value.err)}`);
+          // `value.err` may contain bigints (kit upcasts RPC integers), which
+          // plain JSON.stringify cannot serialize — use the bigint-safe variant.
+          setError(`シミュレーション失敗: ${stringifyWithBigInt(value.err)}`);
         } else {
           setPhase("simulated");
         }

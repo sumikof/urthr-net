@@ -21,6 +21,7 @@ export function MintToPanel() {
   const mintField = useField("");
   const amountField = useField("");
   const [balance, setBalance] = useState<Balance | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
 
   if (status !== "connected" || !wallet) return null;
@@ -35,11 +36,16 @@ export function MintToPanel() {
   async function onRefreshBalance() {
     if (!mintParsed.ok) return;
     setFetching(true);
+    setBalanceError(null);
     try {
       const bal = await client.splToken({ mint: mintParsed.value }).fetchBalance(owner);
       setBalance({ exists: bal.exists, amount: bal.amount, uiAmount: bal.uiAmount });
-    } catch {
+    } catch (e) {
+      // fetchBalance resolves decimals via the mint account first, which throws
+      // (outside its own try) when the mint does not exist or fails to decode.
+      // Surface it instead of swallowing, otherwise the button looks unresponsive.
       setBalance(null);
+      setBalanceError(e instanceof Error ? e.message : String(e));
     } finally {
       setFetching(false);
     }
@@ -97,12 +103,18 @@ export function MintToPanel() {
         >
           {fetching ? "取得中…" : "残高を更新"}
         </button>
-        {balance && (
-          <span style={{ marginLeft: 8, fontSize: "0.9em" }}>
-            {balance.exists
-              ? `残高: ${balance.uiAmount} (${balance.amount.toString()} base units)`
-              : "ATA がまだ存在しません"}
+        {balanceError ? (
+          <span style={{ marginLeft: 8, fontSize: "0.9em", color: "crimson", wordBreak: "break-all" }}>
+            残高取得に失敗: {balanceError}
           </span>
+        ) : (
+          balance && (
+            <span style={{ marginLeft: 8, fontSize: "0.9em" }}>
+              {balance.exists
+                ? `残高: ${balance.uiAmount} (${balance.amount.toString()} base units)`
+                : "ATA がまだ存在しません"}
+            </span>
+          )
         )}
       </div>
     </DebugPanel>
