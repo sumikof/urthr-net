@@ -37,7 +37,7 @@
   特に `paused` フラグは緊急停止のために用意されているのに**切り替え手段が無く**、現状では一度も停止/再開できない。
   attestor の交代、手数料・最低ステーク額の調整も不可能。運用に必須。
 - **受け入れ条件:**
-  - `set_paused(paused: bool)`（admin署名）で `config.paused` を切り替えられる。
+  - `set_paused(paused: bool)`（admin署名）で `config.paused` を切り替えられる。（`set_paused` は実装済み。残りは未実装）
   - `update_attestor(new: Pubkey)`（admin署名）で attestor を交代できる。
   - `update_fee(bps: u16)`（admin署名）で手数料を変更できる。`bps <= FEE_DENOMINATOR` を検証。
   - `update_min_stake(amount: u64)`（admin署名）で最低ステーク額を変更できる。
