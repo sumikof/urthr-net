@@ -60,6 +60,9 @@ export type InitializeProtocolInstruction<
   TAccountConfig extends string | AccountMeta<string> = string,
   TAccountTreasury extends string | AccountMeta<string> = string,
   TAccountPaymentMint extends string | AccountMeta<string> = string,
+  TAccountProgram extends string | AccountMeta<string> =
+    "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb",
+  TAccountProgramData extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> =
     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -84,6 +87,12 @@ export type InitializeProtocolInstruction<
       TAccountPaymentMint extends string
         ? ReadonlyAccount<TAccountPaymentMint>
         : TAccountPaymentMint,
+      TAccountProgram extends string
+        ? ReadonlyAccount<TAccountProgram>
+        : TAccountProgram,
+      TAccountProgramData extends string
+        ? ReadonlyAccount<TAccountProgramData>
+        : TAccountProgramData,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -150,6 +159,8 @@ export type InitializeProtocolAsyncInput<
   TAccountConfig extends string = string,
   TAccountTreasury extends string = string,
   TAccountPaymentMint extends string = string,
+  TAccountProgram extends string = string,
+  TAccountProgramData extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountRent extends string = string,
@@ -158,6 +169,9 @@ export type InitializeProtocolAsyncInput<
   config?: Address<TAccountConfig>;
   treasury?: Address<TAccountTreasury>;
   paymentMint: Address<TAccountPaymentMint>;
+  /** Only the program's upgrade authority may initialize the protocol (anti-front-run). */
+  program?: Address<TAccountProgram>;
+  programData: Address<TAccountProgramData>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   rent?: Address<TAccountRent>;
@@ -172,6 +186,8 @@ export async function getInitializeProtocolInstructionAsync<
   TAccountConfig extends string,
   TAccountTreasury extends string,
   TAccountPaymentMint extends string,
+  TAccountProgram extends string,
+  TAccountProgramData extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountRent extends string,
@@ -182,6 +198,8 @@ export async function getInitializeProtocolInstructionAsync<
     TAccountConfig,
     TAccountTreasury,
     TAccountPaymentMint,
+    TAccountProgram,
+    TAccountProgramData,
     TAccountTokenProgram,
     TAccountSystemProgram,
     TAccountRent
@@ -194,6 +212,8 @@ export async function getInitializeProtocolInstructionAsync<
     TAccountConfig,
     TAccountTreasury,
     TAccountPaymentMint,
+    TAccountProgram,
+    TAccountProgramData,
     TAccountTokenProgram,
     TAccountSystemProgram,
     TAccountRent
@@ -208,6 +228,8 @@ export async function getInitializeProtocolInstructionAsync<
     config: { value: input.config ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
     paymentMint: { value: input.paymentMint ?? null, isWritable: false },
+    program: { value: input.program ?? null, isWritable: false },
+    programData: { value: input.programData ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
@@ -227,6 +249,10 @@ export async function getInitializeProtocolInstructionAsync<
   if (!accounts.treasury.value) {
     accounts.treasury.value = await findTreasuryPda();
   }
+  if (!accounts.program.value) {
+    accounts.program.value =
+      "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb" as Address<"8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -247,6 +273,8 @@ export async function getInitializeProtocolInstructionAsync<
       getAccountMeta("config", accounts.config),
       getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("paymentMint", accounts.paymentMint),
+      getAccountMeta("program", accounts.program),
+      getAccountMeta("programData", accounts.programData),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("rent", accounts.rent),
@@ -261,6 +289,8 @@ export async function getInitializeProtocolInstructionAsync<
     TAccountConfig,
     TAccountTreasury,
     TAccountPaymentMint,
+    TAccountProgram,
+    TAccountProgramData,
     TAccountTokenProgram,
     TAccountSystemProgram,
     TAccountRent
@@ -272,6 +302,8 @@ export type InitializeProtocolInput<
   TAccountConfig extends string = string,
   TAccountTreasury extends string = string,
   TAccountPaymentMint extends string = string,
+  TAccountProgram extends string = string,
+  TAccountProgramData extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
   TAccountRent extends string = string,
@@ -280,6 +312,9 @@ export type InitializeProtocolInput<
   config: Address<TAccountConfig>;
   treasury: Address<TAccountTreasury>;
   paymentMint: Address<TAccountPaymentMint>;
+  /** Only the program's upgrade authority may initialize the protocol (anti-front-run). */
+  program?: Address<TAccountProgram>;
+  programData: Address<TAccountProgramData>;
   tokenProgram?: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   rent?: Address<TAccountRent>;
@@ -294,6 +329,8 @@ export function getInitializeProtocolInstruction<
   TAccountConfig extends string,
   TAccountTreasury extends string,
   TAccountPaymentMint extends string,
+  TAccountProgram extends string,
+  TAccountProgramData extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TAccountRent extends string,
@@ -304,6 +341,8 @@ export function getInitializeProtocolInstruction<
     TAccountConfig,
     TAccountTreasury,
     TAccountPaymentMint,
+    TAccountProgram,
+    TAccountProgramData,
     TAccountTokenProgram,
     TAccountSystemProgram,
     TAccountRent
@@ -315,6 +354,8 @@ export function getInitializeProtocolInstruction<
   TAccountConfig,
   TAccountTreasury,
   TAccountPaymentMint,
+  TAccountProgram,
+  TAccountProgramData,
   TAccountTokenProgram,
   TAccountSystemProgram,
   TAccountRent
@@ -328,6 +369,8 @@ export function getInitializeProtocolInstruction<
     config: { value: input.config ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
     paymentMint: { value: input.paymentMint ?? null, isWritable: false },
+    program: { value: input.program ?? null, isWritable: false },
+    programData: { value: input.programData ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
     rent: { value: input.rent ?? null, isWritable: false },
@@ -341,6 +384,10 @@ export function getInitializeProtocolInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.program.value) {
+    accounts.program.value =
+      "8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb" as Address<"8CsDf7B1YU9HV136afSbYsY8eV2YeJUk5Sd2CpuLLiSb">;
+  }
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" as Address<"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA">;
@@ -361,6 +408,8 @@ export function getInitializeProtocolInstruction<
       getAccountMeta("config", accounts.config),
       getAccountMeta("treasury", accounts.treasury),
       getAccountMeta("paymentMint", accounts.paymentMint),
+      getAccountMeta("program", accounts.program),
+      getAccountMeta("programData", accounts.programData),
       getAccountMeta("tokenProgram", accounts.tokenProgram),
       getAccountMeta("systemProgram", accounts.systemProgram),
       getAccountMeta("rent", accounts.rent),
@@ -375,6 +424,8 @@ export function getInitializeProtocolInstruction<
     TAccountConfig,
     TAccountTreasury,
     TAccountPaymentMint,
+    TAccountProgram,
+    TAccountProgramData,
     TAccountTokenProgram,
     TAccountSystemProgram,
     TAccountRent
@@ -391,9 +442,12 @@ export type ParsedInitializeProtocolInstruction<
     config: TAccountMetas[1];
     treasury: TAccountMetas[2];
     paymentMint: TAccountMetas[3];
-    tokenProgram: TAccountMetas[4];
-    systemProgram: TAccountMetas[5];
-    rent: TAccountMetas[6];
+    /** Only the program's upgrade authority may initialize the protocol (anti-front-run). */
+    program: TAccountMetas[4];
+    programData: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
+    rent: TAccountMetas[8];
   };
   data: InitializeProtocolInstructionData;
 };
@@ -406,12 +460,12 @@ export function parseInitializeProtocolInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedInitializeProtocolInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 9) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 7,
+        expectedAccountMetas: 9,
       },
     );
   }
@@ -428,6 +482,8 @@ export function parseInitializeProtocolInstruction<
       config: getNextAccount(),
       treasury: getNextAccount(),
       paymentMint: getNextAccount(),
+      program: getNextAccount(),
+      programData: getNextAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
       rent: getNextAccount(),
