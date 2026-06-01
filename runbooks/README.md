@@ -1,55 +1,55 @@
-# workspace Runbooks
+# workspace Runbook 集
 
 [![Surfpool](https://img.shields.io/badge/Operated%20with-Surfpool-gree?labelColor=gray)](https://surfpool.run)
 
-## Available Runbooks
+## 利用可能な Runbook
 
 ### deployment
-Deploy programs
+プログラムのデプロイ
 
-## Getting Started
+## はじめに
 
-This repository is using [Surfpool](https://surfpool.run) as a part of its development workflow.
+このリポジトリは開発ワークフローの一環として [Surfpool](https://surfpool.run) を使用しています。
 
-Surfpool provides three major upgrades to the Solana development experience:
-- **Surfnet**: A local validator that runs on your machine, allowing you fork mainnet on the fly so that you always use the latest chain data when testing your programs.
-- **Runbooks**: Bringing the devops best practice of `infrastructure as code` to Solana, Runbooks allow you to have secure, reproducible, and composable scripts for managing on-chain operations & deployments.
-- **Surfpool Studio**: An all-local Web UI that gives new levels of introspection into your transactions.
+Surfpool は Solana 開発体験に3つの主要な機能強化をもたらします。
+- **Surfnet**: マシン上で動作するローカルバリデータ。オンザフライでメインネットをフォークできるため、プログラムをテストする際に常に最新のチェーンデータを使用できます。
+- **Runbooks**: `infrastructure as code` という DevOps のベストプラクティスを Solana に導入します。オンチェーン操作とデプロイのための安全で再現可能、かつ構成可能なスクリプトを記述できます。
+- **Surfpool Studio**: 完全ローカルの Web UI で、トランザクションに対する新しいレベルの内省機能を提供します。
 
-### Installation
+### インストール
 
-Surfpool installer:
+Surfpool インストーラ:
 
 ```console
 curl -sL https://run.surfpool.run/ | bash
 ```
 
-Install from source:
+ソースからインストール:
 
 ```console
-# Clone repo
+# リポジトリをクローン
 git clone https://github.com/solana-foundation/surfpool.git
 
-# Set repo as current directory
+# リポジトリをカレントディレクトリに設定
 cd surfpool
 
-# Build
+# ビルド
 cargo surfpool-install
 ```
 
-### Start a Surfnet
+### Surfnet を起動する
 
 ```console
 $ surfpool start
 ```
 
-## Resources
+## リソース
 
-Access tutorials and documentation at [docs.surfpool.run](https://docs.surfpool.run) to understand Surfnets and the Runbook syntax, and to discover the powerful features of surfpool.
+Surfnet と Runbook 構文を理解し、surfpool の強力な機能を発見するには、[docs.surfpool.run](https://docs.surfpool.run) のチュートリアルとドキュメントにアクセスしてください。
 
-Additionally, the [Visual Studio Code extension](https://marketplace.visualstudio.com/items?itemName=txtx.txtx) will make writing runbooks easier.
+また、[Visual Studio Code 拡張機能](https://marketplace.visualstudio.com/items?itemName=txtx.txtx) を使用すると Runbook の記述が容易になります。
 
-Our [Surfpool 101 Series](https://www.youtube.com/playlist?list=PL0FMgRjJMRzO1FdunpMS-aUS4GNkgyr3T) is also a great place to start learning about Surfpool and its features:
+[Surfpool 101 シリーズ](https://www.youtube.com/playlist?list=PL0FMgRjJMRzO1FdunpMS-aUS4GNkgyr3T) も Surfpool とその機能について学び始めるのに最適な場所です。
 <a href="https://www.youtube.com/playlist?list=PL0FMgRjJMRzO1FdunpMS-aUS4GNkgyr3T">
   <picture>
     <source srcset="https://raw.githubusercontent.com/solana-foundation/surfpool/main/doc/assets/youtube.png">
@@ -57,21 +57,21 @@ Our [Surfpool 101 Series](https://www.youtube.com/playlist?list=PL0FMgRjJMRzO1Fd
   </picture>
 </a>
 
-## Quickstart
+## クイックスタート
 
-### List runbooks available in this repository
+### このリポジトリで利用可能な Runbook を一覧表示する
 ```console
 $ surfpool ls
 Name                                    Description
 deployment                              Deploy programs
 ```
 
-### Start a Surfnet, automatically executing the `deployment` runbook on program recompile:
+### Surfnet を起動し、プログラム再コンパイル時に `deployment` Runbook を自動実行する:
 ```console
 $ surfpool start --watch
 ```
 
-### Execute an existing runbook
+### 既存の Runbook を実行する
 ```console
 $ surfpool run deployment
 ```
