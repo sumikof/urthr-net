@@ -21,6 +21,7 @@ export function CloseCampaignPanel() {
     <DebugPanel
       title="close_campaign"
       disabled={disabled}
+      resetKey={JSON.stringify([campaignId, mint])}
       build={async (signer: TransactionSigner) => {
         const id = (pId as Extract<typeof pId, { ok: true }>).value;
         const pm = (pMint as Extract<typeof pMint, { ok: true }>).value;

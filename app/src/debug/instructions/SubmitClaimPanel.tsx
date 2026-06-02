@@ -25,6 +25,7 @@ export function SubmitClaimPanel() {
     <DebugPanel
       title="submit_claim"
       disabled={disabled}
+      resetKey={JSON.stringify([advertiser, campaignId, eventCount, merkleRoot])}
       build={async (signer: TransactionSigner) => {
         const adv = (pAdv as Extract<typeof pAdv, { ok: true }>).value;
         const id = (pId as Extract<typeof pId, { ok: true }>).value;

@@ -44,6 +44,7 @@ export function CreateMintPanel() {
     <DebugPanel
       title="mint作成 (localnet)"
       disabled={!ready}
+      resetKey={JSON.stringify([decimalsField.value])}
       build={async (walletSigner) => {
         if (!mintSigner || !decimalsParsed.ok) {
           throw new Error("mint鍵を生成し、decimals を入力してください");

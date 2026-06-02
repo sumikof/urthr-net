@@ -20,6 +20,7 @@ export function RegisterPublisherPanel() {
     <DebugPanel
       title="register_publisher"
       disabled={disabled}
+      resetKey={JSON.stringify([metadata, mint])}
       build={async (signer: TransactionSigner) => {
         const [publisher, stakeVault, config] = await Promise.all([
           publisherPda(signer.address),

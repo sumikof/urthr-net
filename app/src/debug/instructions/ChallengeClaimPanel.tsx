@@ -26,6 +26,7 @@ export function ChallengeClaimPanel() {
     <DebugPanel
       title="challenge_claim"
       disabled={disabled}
+      resetKey={JSON.stringify([advertiser, campaignId, claimNonce, publisherAuthority, evidenceHash])}
       build={async (signer: TransactionSigner) => {
         const adv = (pAdv as Extract<typeof pAdv, { ok: true }>).value;
         const id = (pId as Extract<typeof pId, { ok: true }>).value;

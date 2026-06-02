@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useInstructionRunner, type BuildInstruction } from "./useInstructionRunner";
 
 export type DebugPanelProps = Readonly<{
@@ -13,6 +13,12 @@ export type DebugPanelProps = Readonly<{
   build: BuildInstruction;
   /** Disable simulate/send (e.g. while inputs are invalid). */
   disabled?: boolean;
+  /**
+   * When this value changes (e.g. any input field is edited), drop any stale
+   * simulation so the user must re-simulate before sending. Pass a JSON.stringify
+   * of all input state values. Prevents sending a tx built from old inputs.
+   */
+  resetKey?: unknown;
 }>;
 
 const box: React.CSSProperties = {
@@ -27,9 +33,18 @@ const box: React.CSSProperties = {
  * button, and an "承認して送信" button that is only enabled after a successful
  * simulation. Shows the simulation summary, the signature, or any error.
  */
-export function DebugPanel({ title, children, build, disabled }: DebugPanelProps) {
+export function DebugPanel({ title, children, build, disabled, resetKey }: DebugPanelProps) {
   const runner = useInstructionRunner();
   const { phase, summary, signature, error } = runner;
+
+  // When the panel's inputs change (resetKey), drop any stale simulation so the
+  // user must re-simulate before sending — prevents sending a tx built from old inputs.
+  useEffect(() => {
+    runner.reset();
+    // Only react to input changes; runner.reset identity is stable enough and
+    // including it would reset on unrelated rerenders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   return (
     <fieldset style={box}>
@@ -92,6 +107,14 @@ export function DebugPanel({ title, children, build, disabled }: DebugPanelProps
         >
           エラー: {error}
         </p>
+      )}
+
+      {(phase === "sent" || phase === "error") && (
+        <div style={{ marginTop: "0.5rem" }}>
+          <button type="button" onClick={() => runner.reset()}>
+            リセット
+          </button>
+        </div>
       )}
     </fieldset>
   );

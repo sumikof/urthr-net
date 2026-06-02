@@ -27,6 +27,7 @@ export function SettleClaimPanel() {
     <DebugPanel
       title="settle_claim"
       disabled={disabled}
+      resetKey={JSON.stringify([advertiser, campaignId, claimNonce, publisherAuthority, mint])}
       // permissionless: no signer account — the runner sets the wallet as fee payer (which signs).
       build={async (signer: TransactionSigner) => {
         void signer; // signer intentionally unused: settle_claim has no signer account.

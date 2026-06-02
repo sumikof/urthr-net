@@ -14,6 +14,7 @@ export function SetPausedPanel() {
     <DebugPanel
       title="set_paused"
       disabled={false}
+      resetKey={String(paused)}
       build={async (signer: TransactionSigner) => {
         const config = await configPda();
         return getSetPausedInstruction({ admin: signer, config, paused });
