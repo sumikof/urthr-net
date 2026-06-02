@@ -5,15 +5,26 @@
 
 本レポートは所見の提示のみで、コードは変更していない。修正は後続タスクで実施する。
 
-## 対応状況（2026-06-01 承認後）
+## 対応状況
 
-ユーザ承認により以下を修正済み（`feat/review-cleanup`）:
+**全所見を対応済み**（第1次: `feat/review-cleanup`、第2次: `feat/audit-followups`）。
+
+第1次（O-01/O-02/O-04）:
 
 - **O-01 — 対応済み**: admin 署名の `set_paused(bool)` 命令を新設し、緊急停止を実効化（パネル `SetPausedPanel` 追加・LiteSVM テスト3件追加）。
 - **O-02 — 対応済み**: `initialize_protocol` を program の upgrade authority に制約（`program`/`program_data` アカウント追加、front-run 乗っ取り防止、否定テスト追加）。
 - **O-04 — 対応済み**: `escrow_vault`/`stake_vault` に `token::mint = payment_mint` 制約を追加（defense-in-depth）。
 
-見送り（今回スコープ外）: **O-03**（close_campaign の rent 常駐）、**O-05**（unstake エラー意味付け）、**O-06**（自己チャレンジ禁止）、**A-01**（stale simulation UI）、**A-02**（reset 導線）、**A-03**（デッドコード `RENT_SYSVAR_ADDRESS`）。
+第2次（残り全件）:
+
+- **O-03 — 対応済み**: `close_campaign` で残予算返却後に `escrow_vault` を `CloseAccount` で閉じ、rent を advertiser に返却。`campaign` は claim PDA 参照と `campaign_id` 再利用防止のため Closed tombstone として保持。テストで vault クローズを検証。
+- **O-05 — 対応済み**: unstake の残高超過に専用エラー `UnstakeExceedsBalance` を新設し `InsufficientStake` との混同を解消。
+- **O-06 — 対応済み**: `challenge_claim` に `publisher` アカウントを追加し `challenger != publisher.authority` を強制（自己チャレンジ禁止、`SelfChallengeNotAllowed`）。パネル更新・否定テスト追加。
+- **A-01 — 対応済み**: `DebugPanel` に `resetKey` を追加し、入力変更時に stale なシミュレーションを無効化（全 14 パネルに配線）。
+- **A-02 — 対応済み**: 送信完了/エラー後に「リセット」導線を追加。
+- **A-03 — 対応済み**: デッドコード `RENT_SYSVAR_ADDRESS` を削除。
+
+最終検証: `cargo test -p urthr-net` 33 passed、app `pnpm build`/`test`(25)/`lint`(0 errors) 緑。
 
 ## オンチェーン (Rust / Anchor)
 

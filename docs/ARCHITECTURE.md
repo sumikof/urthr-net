@@ -104,7 +104,7 @@ submit_claim (パブリッシャーが署名 — skin in the game)
 ## テスト
 
 - **ユニット／統合テスト（権威あるゲート）: LiteSVM、Rust** — `programs/urthr-net/tests/`。
-  32テストが*実際の* SPL Tokenプログラムをインプロセスで実行し、すべての命令と完全なライフサイクルをカバーする: fund→stake→submit→settle、submit→challenge→resolve（スラッシュ）、submit→settle→close。`set_paused` とアップグレード権限者限定初期化のテストも含まれる。共有ハーネス（`tests/common/mod.rs`）がmint／トークンアカウントをバイトパックし、PDAを導出し、マルチバージョンの `solana-pubkey` クレートグラフをブリッジする。
+  33テストが*実際の* SPL Tokenプログラムをインプロセスで実行し、すべての命令と完全なライフサイクルをカバーする: fund→stake→submit→settle、submit→challenge→resolve（スラッシュ）、submit→settle→close。`set_paused`・アップグレード権限者限定初期化・自己チャレンジ拒否・unstake 残高超過のテストも含まれる。共有ハーネス（`tests/common/mod.rs`）がmint／トークンアカウントをバイトパックし、PDAを導出し、マルチバージョンの `solana-pubkey` クレートグラフをブリッジする。
 - **Surfnetスモークテスト:** `tests/lifecycle.mjs`（`pnpm test:integration`）は実行中のsurfnet＋プログラムデプロイが存在する場合にチェックし、存在しない場合はクリーンにスキップする。
 
 実行: `NO_DNA=1 anchor build` の後に `cargo test -p urthr-net` を実行する。

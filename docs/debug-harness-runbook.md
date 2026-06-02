@@ -18,7 +18,7 @@
 
 ## テスト方針（最初に読む）
 
-- **単一ウォレットで全ロールを兼ねる**：同じ接続ウォレットが `admin` / `attestor` / `publisher authority` / `advertiser` / `challenger` を兼任する。これで 1 ウォレットだけで全命令を通せる。
+- **単一ウォレットで大半のロールを兼ねる**：同じ接続ウォレットが `admin` / `attestor` / `publisher authority` / `advertiser` を兼任できる。**ただし `challenge_claim` の `challenger` は publisher authority と別のウォレットである必要がある**（自己チャレンジは `SelfChallengeNotAllowed` で弾かれる）。チャレンジ系（経路 A/B）を試すときだけ、別のウォレットを接続して challenge する。
 - **payment_mint は全命令で同一**：手順 1 で作る mint を、initialize の `payment_mint` にも、register / stake / create / fund / resolve / settle の `payment_mint` 入力にも **すべて同じ値** で使う（不一致は `InvalidMint`）。
 - **PDA は自動導出**：`config` / `publisher` / `stake_vault` / `campaign` / `escrow_vault` / `claim` / `treasury` はパネルが自動導出。ATA は `payment_mint` から自動導出。**ユーザが手入力するのは値と「ユーザ指定アカウント」だけ**（`payment_mint`、`advertiser`、`publisher_authority`、ClaimInspector の `campaign` PDA）。
 - **challenge_window の設計が重要**（後述）：`settle_claim` は「期限切れ後」、`challenge_claim` / `resolve_claim` は「期限内」。両方を試すため **短め（例 15 秒）** を推奨。
@@ -126,8 +126,9 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 1. **submit_claim**（nonce=0 になる）
    - `advertiser (pubkey)` = 自分、`campaign_id` = `0`、`event_count (u64)` = `1`、`merkle_root (bytes32 hex)` = 64 桁 hex（例 `1`×64）→ 送信。
    - CampaignInspector で `locked_budget`↑ `claims_count`→`1`、PublisherInspector で `locked_amount`↑ を確認。
-2. **challenge_claim**（**期限内に**）
-   - `advertiser` = 自分、`campaign_id` = `0`、`claim_nonce (u64)` = `0`、`evidence_hash (bytes32 hex)` = 64 桁 hex（例 `2`×64）→ 送信。
+2. **challenge_claim**（**期限内に**、**publisher authority とは別のウォレットで接続して実行**）
+   - `advertiser` = 自分、`campaign_id` = `0`、`claim_nonce (u64)` = `0`、`publisher_authority (pubkey)` = **元の publisher のアドレス**、`evidence_hash (bytes32 hex)` = 64 桁 hex（例 `2`×64）→ 送信。
+   - ※ publisher authority 自身で送ると `SelfChallengeNotAllowed` で弾かれる。
    - ClaimInspector（`campaign` = `<CAMPAIGN_PDA>`, `claim_nonce` = `0`）で `status=Challenged` を確認。
 3. **resolve_claim**（`fraud` = **OFF**）
    - `advertiser` = 自分、`campaign_id` = `0`、`claim_nonce` = `0`、`publisher_authority (pubkey)` = 自分、`payment_mint` = `<MINT>`、`fraud (bool)` = **チェックしない** → 送信。
@@ -136,7 +137,7 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 ### 経路 B: チャレンジ → 裁定（スラッシュ / Slashed）
 
 1. **submit_claim**（nonce=1）：経路 A.1 と同様、新しい claim を作成。
-2. **challenge_claim**（期限内）：`claim_nonce` = `1` → 送信（`Challenged`）。
+2. **challenge_claim**（期限内、publisher と別ウォレットで）：`claim_nonce` = `1`、`publisher_authority` = 元の publisher のアドレス → 送信（`Challenged`）。
 3. **resolve_claim**（`fraud` = **ON**）
    - `claim_nonce` = `1`、他は経路 A.3 と同様、**`fraud (bool)` をチェック** → 送信。
    - 結果: `status=Slashed`。stake_vault → escrow_vault へ `amount` 移動、PublisherInspector `staked_amount`↓、CampaignInspector `budget_remaining` が **`amount × 2`**（ロック解除分＋スラッシュ補償）増加。
@@ -174,7 +175,7 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 | 5 | `create_campaign` | 5.1 | advertiser | !paused, price>0 |
 | 6 | `fund_campaign` | 5.3 | advertiser | !paused, Active, ATA に残高 |
 | 7 | `submit_claim` | 6.A.1 / 6.B.1 / 6.C.1 | publisher authority | !paused, Active, budget/stake ≥ amount |
-| 8 | `challenge_claim` | 6.A.2 / 6.B.2 | challenger（誰でも） | Pending, 期限内 |
+| 8 | `challenge_claim` | 6.A.2 / 6.B.2 | challenger（publisher authority 以外の誰でも） | Pending, 期限内, challenger ≠ publisher authority |
 | 9 | `resolve_claim`（fraud=false） | 6.A.3 | attestor（=config.attestor） | !paused, Challenged |
 | 10 | `resolve_claim`（fraud=true） | 6.B.3 | attestor | !paused, Challenged |
 | 11 | `settle_claim` | 6.C.3 | なし（permissionless） | Pending, 期限切れ |
