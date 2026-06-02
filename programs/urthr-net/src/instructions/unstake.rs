@@ -37,7 +37,7 @@ pub struct Unstake<'info> {
 pub fn handler(ctx: Context<Unstake>, amount: u64) -> Result<()> {
     let publisher = &ctx.accounts.publisher;
     let remaining = publisher.staked_amount
-        .checked_sub(amount).ok_or(UrthrError::InsufficientStake)?;
+        .checked_sub(amount).ok_or(UrthrError::UnstakeExceedsBalance)?;
     require!(remaining >= publisher.locked_amount, UrthrError::StakeLocked);
     require!(
         remaining == 0 || remaining >= ctx.accounts.config.min_publisher_stake,

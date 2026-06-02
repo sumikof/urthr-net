@@ -34,4 +34,6 @@ pub enum UrthrError {
     InvalidPrice,
     #[msg("Arithmetic overflow")]
     MathOverflow,
+    #[msg("Unstake amount exceeds the staked balance")]
+    UnstakeExceedsBalance,
 }
