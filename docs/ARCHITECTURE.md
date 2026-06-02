@@ -92,7 +92,7 @@ submit_claim (パブリッシャーが署名 — skin in the game)
 | 9 | `challenge_claim` | 誰でも | 証拠ハッシュで不正にフラグを立てる（ウィンドウ内） |
 | 10 | `resolve_claim` | **attestor** | チャレンジされたクレームを判定: 決済またはスラッシュ |
 | 11 | `settle_claim` | 誰でも | ウィンドウ経過後にチャレンジのないクレームを支払う |
-| 12 | `close_campaign` | advertiser | 残予算を返金する（ロック予算がない場合のみ） |
+| 12 | `close_campaign` | advertiser | 残予算を advertiser に返却し、`escrow_vault` を閉じて rent を返却、`status = Closed` に（campaign アカウントは claim 参照のため Closed tombstone として保持） |
 
 ### セキュリティ制約（多層防御）
 
@@ -104,7 +104,7 @@ submit_claim (パブリッシャーが署名 — skin in the game)
 ## テスト
 
 - **ユニット／統合テスト（権威あるゲート）: LiteSVM、Rust** — `programs/urthr-net/tests/`。
-  31テストが*実際の* SPL Tokenプログラムをインプロセスで実行し、すべての命令と完全なライフサイクルをカバーする: fund→stake→submit→settle、submit→challenge→resolve（スラッシュ）、submit→settle→close。`set_paused` とアップグレード権限者限定初期化のテストも含まれる。共有ハーネス（`tests/common/mod.rs`）がmint／トークンアカウントをバイトパックし、PDAを導出し、マルチバージョンの `solana-pubkey` クレートグラフをブリッジする。
+  32テストが*実際の* SPL Tokenプログラムをインプロセスで実行し、すべての命令と完全なライフサイクルをカバーする: fund→stake→submit→settle、submit→challenge→resolve（スラッシュ）、submit→settle→close。`set_paused` とアップグレード権限者限定初期化のテストも含まれる。共有ハーネス（`tests/common/mod.rs`）がmint／トークンアカウントをバイトパックし、PDAを導出し、マルチバージョンの `solana-pubkey` クレートグラフをブリッジする。
 - **Surfnetスモークテスト:** `tests/lifecycle.mjs`（`pnpm test:integration`）は実行中のsurfnet＋プログラムデプロイが存在する場合にチェックし、存在しない場合はクリーンにスキップする。
 
 実行: `NO_DNA=1 anchor build` の後に `cargo test -p urthr-net` を実行する。

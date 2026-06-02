@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked};
+use anchor_spl::token::{
+    close_account, transfer_checked, CloseAccount, Mint, Token, TokenAccount, TransferChecked,
+};
 use crate::constants::*;
 use crate::error::UrthrError;
 use crate::state::{Campaign, CampaignStatus, ProtocolConfig};
@@ -36,17 +38,20 @@ pub struct CloseCampaign<'info> {
 // own unspent budget (an exit/withdrawal), which should remain available even
 // during an emergency pause — same rationale as `unstake`.
 pub fn handler(ctx: Context<CloseCampaign>) -> Result<()> {
+    // Build signer seeds once — used by both the refund transfer and vault close CPIs.
+    // Must be computed before taking &mut ctx.accounts.campaign below.
+    let advertiser = ctx.accounts.campaign.advertiser;
+    let campaign_id = ctx.accounts.campaign.campaign_id.to_le_bytes();
+    let bump = ctx.accounts.campaign.bump;
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        CAMPAIGN_SEED,
+        advertiser.as_ref(),
+        &campaign_id,
+        &[bump],
+    ]];
+
     let refund = ctx.accounts.campaign.budget_remaining;
     if refund > 0 {
-        let advertiser = ctx.accounts.campaign.advertiser;
-        let campaign_id = ctx.accounts.campaign.campaign_id.to_le_bytes();
-        let bump = ctx.accounts.campaign.bump;
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            CAMPAIGN_SEED,
-            advertiser.as_ref(),
-            &campaign_id,
-            &[bump],
-        ]];
         transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.key(),
@@ -62,6 +67,18 @@ pub fn handler(ctx: Context<CloseCampaign>) -> Result<()> {
             ctx.accounts.payment_mint.decimals,
         )?;
     }
+
+    // Close the escrow vault (balance is now 0) and return its rent to the advertiser.
+    close_account(CpiContext::new_with_signer(
+        ctx.accounts.token_program.key(),
+        CloseAccount {
+            account: ctx.accounts.escrow_vault.to_account_info(),
+            destination: ctx.accounts.advertiser.to_account_info(),
+            authority: ctx.accounts.campaign.to_account_info(),
+        },
+        signer_seeds,
+    ))?;
+
     let campaign = &mut ctx.accounts.campaign;
     campaign.budget_remaining = 0;
     campaign.status = CampaignStatus::Closed;

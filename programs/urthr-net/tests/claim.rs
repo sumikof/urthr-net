@@ -405,7 +405,9 @@ fn close_campaign_refunds_remaining() {
         &[],
     ).unwrap();
     assert_eq!(env.token_balance(&s.wallet), wallet_before + 200 * ONE_TOKEN);
-    assert_eq!(env.token_balance(&s.escrow_vault), 0);
+    // O-03: escrow_vault must be closed (rent returned) — zero-lamport accounts
+    // are removed by litesvm, so get_account returns None.
+    assert!(env.svm.get_account(&s.escrow_vault).is_none(), "escrow_vault should be closed");
     let c: Campaign = env.get(&s.campaign);
     assert!(c.status == CampaignStatus::Closed);
     assert_eq!(c.budget_remaining, 0);
@@ -464,7 +466,8 @@ fn close_campaign_after_partial_settle_refunds_remainder() {
         &[],
     ).unwrap();
     assert_eq!(env.token_balance(&s.wallet), wallet_before + 160 * ONE_TOKEN);
-    assert_eq!(env.token_balance(&s.escrow_vault), 0);
+    // O-03: escrow_vault must be closed (rent returned) after close_campaign.
+    assert!(env.svm.get_account(&s.escrow_vault).is_none(), "escrow_vault should be closed after partial-settle close");
     let c: Campaign = env.get(&s.campaign);
     assert!(c.status == CampaignStatus::Closed);
     assert_eq!(c.budget_remaining, 0);

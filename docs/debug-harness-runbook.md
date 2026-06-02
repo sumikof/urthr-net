@@ -157,7 +157,7 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 ## 7. 後始末（残りの命令）
 
 1. **close_campaign**：全 claim 解決後（`locked_budget=0`）に `campaign_id` = `0`、`payment_mint` = `<MINT>` で送信。
-   - `budget_remaining` が advertiser ATA に返却され、`status=Closed`。
+   - `budget_remaining` が advertiser ATA に返却され、`escrow_vault` が閉じられて rent が返却され、`status=Closed`。
 2. （任意）**unstake** で残り stake を引き出し（`locked_amount=0` のはず）。`amount` = 残額 → 送信。
 
 ---
