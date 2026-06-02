@@ -5,6 +5,7 @@
 #![allow(ambiguous_glob_reexports)]
 
 pub mod initialize_protocol;
+pub mod set_paused;
 pub mod register_publisher;
 pub mod stake;
 pub mod unstake;
@@ -17,6 +18,7 @@ pub mod resolve_claim;
 pub mod close_campaign;
 
 pub use initialize_protocol::*;
+pub use set_paused::*;
 pub use register_publisher::*;
 pub use stake::*;
 pub use unstake::*;

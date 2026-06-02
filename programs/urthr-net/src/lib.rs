@@ -26,6 +26,10 @@ pub mod urthr_net {
         initialize_protocol::handler(ctx, attestor, protocol_fee_bps, min_publisher_stake, challenge_window)
     }
 
+    pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
+        set_paused::handler(ctx, paused)
+    }
+
     pub fn register_publisher(ctx: Context<RegisterPublisher>, metadata: [u8; 32]) -> Result<()> {
         register_publisher::handler(ctx, metadata)
     }

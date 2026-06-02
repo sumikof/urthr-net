@@ -14,7 +14,10 @@ pub fn init_protocol(env: &mut Env) {
         },
         urthr_net::accounts::InitializeProtocol {
             admin: env.payer_pk(), config, treasury,
-            payment_mint: env.mint, token_program: spl_token_id(),
+            payment_mint: env.mint,
+            program: env.program_id,
+            program_data: common::program_data_address(&env.program_id),
+            token_program: spl_token_id(),
             system_program: anchor_lang::system_program::ID,
             rent: anchor_lang::prelude::rent::ID,
         },

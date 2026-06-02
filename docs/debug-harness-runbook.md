@@ -3,8 +3,8 @@
 `app/`（localnet デバッグ画面）を **画面の上から順に** 操作して、オンチェーン全命令を手動で網羅検証するための手順書。
 各パネルは「**シミュレート → 内容確認 → 承認して送信**」の契約（[`CLAUDE.md`](../CLAUDE.md)）に従う。
 
-> 対象範囲: 現状デプロイ済みの **13 実行**（11 命令 + `resolve_claim` の fraud 2 経路）。
-> 管理命令（`set_paused` 等, features.md A1）は未実装のため本書では未カバー。
+> 対象範囲: 現状デプロイ済みの **14 実行**（12 命令 + `resolve_claim` の fraud 2 経路）。`set_paused` は実装済みでパネルあり（手順 3 参照）。
+> 残りの管理命令（`update_attestor` / `update_fee` / `update_min_stake`, features.md A1）は未実装のため本書では未カバー。
 
 ---
 
@@ -72,8 +72,10 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
    - `payment_mint (pubkey)` = `<MINT>`
    - 送信。
 2. **ProtocolConfigInspector** の「取得」で確認：`paused=false` / `attestor` = 自分 / `payment_mint` = `<MINT>` / `treasury` 生成済み。
+3. （任意）**set_paused**：`paused` チェックボックスで緊急停止を ON/OFF（admin 署名）。ON の間は資金移動命令（register / stake / create / fund / submit / settle / resolve）が `ProtocolPaused` で弾かれ、`unstake` / `close_campaign` は引き続き可能。ProtocolConfigInspector で `paused` を確認。検証後は OFF に戻して以降の手順を進める。
 
 > `initialize_protocol` は `treasury`（config 権限の SPL アカウント）も生成する。mint 作成（手順 2）より後に実行すること。
+> `initialize_protocol` はデプロイ／upgrade authority のウォレットでのみ実行できる（パネルが `program` / `program_data` を自動導出するため手入力は不要）。
 
 ---
 
@@ -164,7 +166,8 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 
 | # | 命令 | 操作する手順 | 署名ロール | 主な前提 |
 |---|------|------|------|------|
-| 1 | `initialize_protocol` | 3 | admin（自分） | mint 作成済み |
+| 1 | `initialize_protocol` | 3 | admin（自分） | mint 作成済み, upgrade authority |
+| 1b | `set_paused` | 3.3 | admin | config.admin |
 | 2 | `register_publisher` | 4.1 | authority（自分） | !paused, mint 一致 |
 | 3 | `stake` | 4.3 | authority | !paused, mint 一致, ATA に残高 |
 | 4 | `unstake` | 4.4 / 7.2 | authority | 残額 0 or ≥ min_stake, locked 以上 |
@@ -177,7 +180,7 @@ submit_claim ─► Pending ─┬─(期限内に challenge)─► Challenged �
 | 11 | `settle_claim` | 6.C.3 | なし（permissionless） | Pending, 期限切れ |
 | 12 | `close_campaign` | 7.1 | advertiser | Active, locked_budget=0 |
 
-> 未カバー（実装後に追記）: `set_paused` / `update_attestor` / `update_fee` / `update_min_stake`（features.md **A1**）。
+> 未カバー（実装後に追記）: `update_attestor` / `update_fee` / `update_min_stake`（features.md **A1**）。
 
 ---
 

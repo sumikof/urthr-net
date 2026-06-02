@@ -13,6 +13,7 @@ export * from "./fundCampaign";
 export * from "./initializeProtocol";
 export * from "./registerPublisher";
 export * from "./resolveClaim";
+export * from "./setPaused";
 export * from "./settleClaim";
 export * from "./stake";
 export * from "./submitClaim";

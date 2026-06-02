@@ -30,6 +30,12 @@ pub struct InitializeProtocol<'info> {
 
     pub payment_mint: Account<'info, Mint>,
 
+    /// Only the program's upgrade authority may initialize the protocol (anti-front-run).
+    #[account(constraint = program.programdata_address()? == Some(program_data.key()) @ UrthrError::Unauthorized)]
+    pub program: Program<'info, crate::program::UrthrNet>,
+    #[account(constraint = program_data.upgrade_authority_address == Some(admin.key()) @ UrthrError::Unauthorized)]
+    pub program_data: Account<'info, ProgramData>,
+
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,

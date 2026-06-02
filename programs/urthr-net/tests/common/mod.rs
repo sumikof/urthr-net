@@ -75,6 +75,16 @@ impl Env {
         let payer = Keypair::new();
         svm.airdrop(&payer.pubkey(), 100_000_000_000).unwrap();
 
+        // `add_program` creates a ProgramData account with no upgrade authority.
+        // Set it to the payer so tests that use `admin = payer` pass the
+        // upgrade-authority constraint on `initialize_protocol`.
+        let pd_addr = program_data_address(&program_id);
+        let mut pd = svm.get_account(&pd_addr).expect("programdata exists after add_program");
+        assert_eq!(pd.data[12], 0, "expected Option::None tag at offset 12");
+        pd.data[12] = 1; // Option::Some tag for upgrade_authority_address
+        pd.data[13..45].copy_from_slice(&payer.pk().to_bytes());
+        svm.set_account(pd_addr, pd).unwrap();
+
         let mut env = Self { svm, program_id, payer, mint: Pubkey::default() };
         env.mint = env.create_mint(6);
         env
@@ -219,4 +229,12 @@ pub fn escrow_vault_pda(program_id: &Pubkey, campaign: &Pubkey) -> (Pubkey, u8) 
 }
 pub fn claim_pda(program_id: &Pubkey, campaign: &Pubkey, nonce: u64) -> (Pubkey, u8) {
     Pubkey::find_program_address(&[urthr_net::constants::CLAIM_SEED, campaign.as_ref(), &nonce.to_le_bytes()], program_id)
+}
+
+pub fn bpf_upgradeable_loader_id() -> Pubkey {
+    // BPFLoaderUpgradeab1e11111111111111111111111
+    Pubkey::new_from_array(anchor_lang::solana_program::bpf_loader_upgradeable::id().to_bytes())
+}
+pub fn program_data_address(program_id: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[program_id.as_ref()], &bpf_upgradeable_loader_id()).0
 }

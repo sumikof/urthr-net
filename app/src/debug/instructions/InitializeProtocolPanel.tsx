@@ -3,8 +3,8 @@ import { useWalletConnection } from "@solana/react-hooks";
 import type { TransactionSigner } from "@solana/kit";
 import { DebugPanel } from "../core/DebugPanel";
 import { TextField, parsePubkey, parseU16, parseU64 } from "../core/fields";
-import { configPda, treasuryPda } from "../core/pdas";
-import { getInitializeProtocolInstruction } from "../../generated";
+import { configPda, treasuryPda, programDataPda } from "../core/pdas";
+import { getInitializeProtocolInstruction, URTHR_NET_PROGRAM_ADDRESS } from "../../generated";
 
 export function InitializeProtocolPanel() {
   const { wallet, status } = useWalletConnection();
@@ -27,11 +27,13 @@ export function InitializeProtocolPanel() {
       title="initialize_protocol"
       disabled={disabled}
       build={async (signer: TransactionSigner) => {
-        const [config, treasury] = await Promise.all([configPda(), treasuryPda()]);
+        const [config, treasury, programData] = await Promise.all([configPda(), treasuryPda(), programDataPda()]);
         return getInitializeProtocolInstruction({
           admin: signer,
           config,
           treasury,
+          program: URTHR_NET_PROGRAM_ADDRESS,
+          programData,
           paymentMint: (pMint as Extract<typeof pMint, { ok: true }>).value,
           attestor: (pAtt as Extract<typeof pAtt, { ok: true }>).value,
           protocolFeeBps: (pFee as Extract<typeof pFee, { ok: true }>).value,
