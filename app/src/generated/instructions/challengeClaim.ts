@@ -26,6 +26,7 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
+  type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
@@ -51,6 +52,7 @@ export type ChallengeClaimInstruction<
   TProgram extends string = typeof URTHR_NET_PROGRAM_ADDRESS,
   TAccountChallenger extends string | AccountMeta<string> = string,
   TAccountClaim extends string | AccountMeta<string> = string,
+  TAccountPublisher extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -63,6 +65,9 @@ export type ChallengeClaimInstruction<
       TAccountClaim extends string
         ? WritableAccount<TAccountClaim>
         : TAccountClaim,
+      TAccountPublisher extends string
+        ? ReadonlyAccount<TAccountPublisher>
+        : TAccountPublisher,
       ...TRemainingAccounts,
     ]
   >;
@@ -106,23 +111,31 @@ export function getChallengeClaimInstructionDataCodec(): FixedSizeCodec<
 export type ChallengeClaimInput<
   TAccountChallenger extends string = string,
   TAccountClaim extends string = string,
+  TAccountPublisher extends string = string,
 > = {
   challenger: TransactionSigner<TAccountChallenger>;
   claim: Address<TAccountClaim>;
+  publisher: Address<TAccountPublisher>;
   evidenceHash: ChallengeClaimInstructionDataArgs["evidenceHash"];
 };
 
 export function getChallengeClaimInstruction<
   TAccountChallenger extends string,
   TAccountClaim extends string,
+  TAccountPublisher extends string,
   TProgramAddress extends Address = typeof URTHR_NET_PROGRAM_ADDRESS,
 >(
-  input: ChallengeClaimInput<TAccountChallenger, TAccountClaim>,
+  input: ChallengeClaimInput<
+    TAccountChallenger,
+    TAccountClaim,
+    TAccountPublisher
+  >,
   config?: { programAddress?: TProgramAddress },
 ): ChallengeClaimInstruction<
   TProgramAddress,
   TAccountChallenger,
-  TAccountClaim
+  TAccountClaim,
+  TAccountPublisher
 > {
   // Program address.
   const programAddress = config?.programAddress ?? URTHR_NET_PROGRAM_ADDRESS;
@@ -131,6 +144,7 @@ export function getChallengeClaimInstruction<
   const originalAccounts = {
     challenger: { value: input.challenger ?? null, isWritable: true },
     claim: { value: input.claim ?? null, isWritable: true },
+    publisher: { value: input.publisher ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -145,6 +159,7 @@ export function getChallengeClaimInstruction<
     accounts: [
       getAccountMeta("challenger", accounts.challenger),
       getAccountMeta("claim", accounts.claim),
+      getAccountMeta("publisher", accounts.publisher),
     ],
     data: getChallengeClaimInstructionDataEncoder().encode(
       args as ChallengeClaimInstructionDataArgs,
@@ -153,7 +168,8 @@ export function getChallengeClaimInstruction<
   } as ChallengeClaimInstruction<
     TProgramAddress,
     TAccountChallenger,
-    TAccountClaim
+    TAccountClaim,
+    TAccountPublisher
   >);
 }
 
@@ -165,6 +181,7 @@ export type ParsedChallengeClaimInstruction<
   accounts: {
     challenger: TAccountMetas[0];
     claim: TAccountMetas[1];
+    publisher: TAccountMetas[2];
   };
   data: ChallengeClaimInstructionData;
 };
@@ -177,12 +194,12 @@ export function parseChallengeClaimInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>,
 ): ParsedChallengeClaimInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 2) {
+  if (instruction.accounts.length < 3) {
     throw new SolanaError(
       SOLANA_ERROR__PROGRAM_CLIENTS__INSUFFICIENT_ACCOUNT_METAS,
       {
         actualAccountMetas: instruction.accounts.length,
-        expectedAccountMetas: 2,
+        expectedAccountMetas: 3,
       },
     );
   }
@@ -194,7 +211,11 @@ export function parseChallengeClaimInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { challenger: getNextAccount(), claim: getNextAccount() },
+    accounts: {
+      challenger: getNextAccount(),
+      claim: getNextAccount(),
+      publisher: getNextAccount(),
+    },
     data: getChallengeClaimInstructionDataDecoder().decode(instruction.data),
   };
 }

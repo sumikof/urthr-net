@@ -140,3 +140,34 @@ fn unstake_below_minimum_but_nonzero_is_rejected() {
     );
     assert!(res.is_err());
 }
+
+#[test]
+fn unstake_more_than_staked_is_rejected() {
+    let mut env = Env::new();
+    init_protocol(&mut env);
+    let authority = env.payer_pk();
+    let (publisher, stake_vault) = register(&mut env);
+    let user_ata = env.create_token_account(&authority, 100 * ONE_TOKEN);
+    let (config, _) = config_pda(&env.program_id);
+    // Stake 5 tokens
+    env.send(
+        urthr_net::instruction::Stake { amount: 5 * ONE_TOKEN },
+        urthr_net::accounts::Stake {
+            authority, config, publisher, stake_vault,
+            authority_token_account: user_ata,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    ).unwrap();
+    // Attempt to unstake 10 tokens (more than staked) — must fail
+    let res = env.send(
+        urthr_net::instruction::Unstake { amount: 10 * ONE_TOKEN },
+        urthr_net::accounts::Unstake {
+            authority, config, publisher, stake_vault,
+            authority_token_account: user_ata,
+            payment_mint: env.mint, token_program: spl_token_id(),
+        },
+        &[],
+    );
+    assert!(res.is_err());
+}

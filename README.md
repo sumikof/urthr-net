@@ -51,7 +51,7 @@ cd app && pnpm dev                          # http://localhost:5173 を開く
 # プログラムをビルド（target/deploy/urthr_net.so + IDL を生成）
 NO_DNA=1 anchor build
 
-# 正式なテストスイートを実行（31 件の LiteSVM テスト、スラッシュ・set_paused・アップグレード権限制限済み init を含む完全ライフサイクル）
+# 正式なテストスイートを実行（33 件の LiteSVM テスト、スラッシュ・set_paused・アップグレード権限制限済み init・自己チャレンジ拒否を含む完全ライフサイクル）
 cargo test -p urthr-net
 
 # オプション: surfnet インテグレーションスモークテスト（事前に surfnet を起動）

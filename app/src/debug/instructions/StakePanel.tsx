@@ -21,6 +21,7 @@ export function StakePanel() {
     <DebugPanel
       title="stake"
       disabled={disabled}
+      resetKey={JSON.stringify([amount, mint])}
       build={async (signer: TransactionSigner) => {
         const pm = (pMint as Extract<typeof pMint, { ok: true }>).value;
         const [config, publisher, stakeVault, authorityTokenAccount] = await Promise.all([

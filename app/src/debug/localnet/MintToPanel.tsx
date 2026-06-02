@@ -55,6 +55,7 @@ export function MintToPanel() {
     <DebugPanel
       title="mintTo → 自分のATA (localnet)"
       disabled={!valid}
+      resetKey={JSON.stringify([mintField.value, amountField.value])}
       build={async (walletSigner) => {
         if (!mintParsed.ok || !amountParsed.ok) {
           throw new Error("mint と amount を入力してください");

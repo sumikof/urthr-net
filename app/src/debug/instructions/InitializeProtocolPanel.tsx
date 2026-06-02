@@ -26,6 +26,7 @@ export function InitializeProtocolPanel() {
     <DebugPanel
       title="initialize_protocol"
       disabled={disabled}
+      resetKey={JSON.stringify([attestor, feeBps, minStake, window_, mint])}
       build={async (signer: TransactionSigner) => {
         const [config, treasury, programData] = await Promise.all([configPda(), treasuryPda(), programDataPda()]);
         return getInitializeProtocolInstruction({
