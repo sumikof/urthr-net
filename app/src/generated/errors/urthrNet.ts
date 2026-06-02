@@ -48,6 +48,8 @@ export const URTHR_NET_ERROR__INVALID_PRICE = 0x177e; // 6014
 export const URTHR_NET_ERROR__MATH_OVERFLOW = 0x177f; // 6015
 /** UnstakeExceedsBalance: Unstake amount exceeds the staked balance */
 export const URTHR_NET_ERROR__UNSTAKE_EXCEEDS_BALANCE = 0x1780; // 6016
+/** SelfChallengeNotAllowed: Publisher cannot challenge their own claim */
+export const URTHR_NET_ERROR__SELF_CHALLENGE_NOT_ALLOWED = 0x1781; // 6017
 
 export type UrthrNetError =
   | typeof URTHR_NET_ERROR__CAMPAIGN_NOT_ACTIVE
@@ -64,6 +66,7 @@ export type UrthrNetError =
   | typeof URTHR_NET_ERROR__INVALID_PRICE
   | typeof URTHR_NET_ERROR__MATH_OVERFLOW
   | typeof URTHR_NET_ERROR__PROTOCOL_PAUSED
+  | typeof URTHR_NET_ERROR__SELF_CHALLENGE_NOT_ALLOWED
   | typeof URTHR_NET_ERROR__STAKE_LOCKED
   | typeof URTHR_NET_ERROR__UNAUTHORIZED
   | typeof URTHR_NET_ERROR__UNSTAKE_EXCEEDS_BALANCE;
@@ -85,6 +88,7 @@ if (process.env["NODE_ENV"] !== "production") {
     [URTHR_NET_ERROR__INVALID_PRICE]: `Price per event must be greater than zero`,
     [URTHR_NET_ERROR__MATH_OVERFLOW]: `Arithmetic overflow`,
     [URTHR_NET_ERROR__PROTOCOL_PAUSED]: `Protocol is paused`,
+    [URTHR_NET_ERROR__SELF_CHALLENGE_NOT_ALLOWED]: `Publisher cannot challenge their own claim`,
     [URTHR_NET_ERROR__STAKE_LOCKED]: `Requested unstake would drop below locked stake or minimum`,
     [URTHR_NET_ERROR__UNAUTHORIZED]: `Signer is not authorized for this action`,
     [URTHR_NET_ERROR__UNSTAKE_EXCEEDS_BALANCE]: `Unstake amount exceeds the staked balance`,

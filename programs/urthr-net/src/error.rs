@@ -36,4 +36,6 @@ pub enum UrthrError {
     MathOverflow,
     #[msg("Unstake amount exceeds the staked balance")]
     UnstakeExceedsBalance,
+    #[msg("Publisher cannot challenge their own claim")]
+    SelfChallengeNotAllowed,
 }

@@ -157,13 +157,14 @@ fn submit_claim_rejects_over_budget() {
     assert!(res.is_err());
 }
 
-pub fn challenge(env: &mut Env, claim: solana_pubkey::Pubkey, challenger: &solana_keypair::Keypair) {
+pub fn challenge(env: &mut Env, s: &Setup, claim: solana_pubkey::Pubkey, challenger: &solana_keypair::Keypair) {
     env.svm.airdrop(&challenger.pubkey(), 1_000_000_000).unwrap();
     env.send(
         urthr_net::instruction::ChallengeClaim { evidence_hash: [3u8; 32] },
         urthr_net::accounts::ChallengeClaim {
             challenger: challenger.pk(),
             claim,
+            publisher: s.publisher,
         },
         &[challenger],
     ).unwrap();
@@ -175,7 +176,7 @@ fn challenge_moves_claim_to_challenged() {
     let s = setup(&mut env);
     let claim = submit(&mut env, &s, 0, 40);
     let challenger = solana_keypair::Keypair::new();
-    challenge(&mut env, claim, &challenger);
+    challenge(&mut env, &s, claim, &challenger);
 
     let c: Claim = env.get(&claim);
     assert!(c.status == ClaimStatus::Challenged);
@@ -193,8 +194,27 @@ fn challenge_after_window_is_rejected() {
     env.svm.airdrop(&challenger.pubkey(), 1_000_000_000).unwrap();
     let res = env.send(
         urthr_net::instruction::ChallengeClaim { evidence_hash: [3u8; 32] },
-        urthr_net::accounts::ChallengeClaim { challenger: challenger.pk(), claim },
+        urthr_net::accounts::ChallengeClaim { challenger: challenger.pk(), claim, publisher: s.publisher },
         &[&challenger],
+    );
+    assert!(res.is_err());
+}
+
+#[test]
+fn self_challenge_is_rejected() {
+    // O-06: the publisher's own authority (here, the payer) cannot challenge its claim.
+    let mut env = Env::new();
+    let s = setup(&mut env);
+    let claim = submit(&mut env, &s, 0, 40);
+    // challenger == publisher authority (the payer) → self-challenge.
+    let res = env.send(
+        urthr_net::instruction::ChallengeClaim { evidence_hash: [3u8; 32] },
+        urthr_net::accounts::ChallengeClaim {
+            challenger: s.authority,
+            claim,
+            publisher: s.publisher,
+        },
+        &[],
     );
     assert!(res.is_err());
 }
@@ -261,7 +281,7 @@ fn settle_challenged_claim_is_rejected() {
     let s = setup(&mut env);
     let claim = submit(&mut env, &s, 0, 40);
     let challenger = solana_keypair::Keypair::new();
-    challenge(&mut env, claim, &challenger);
+    challenge(&mut env, &s, claim, &challenger);
     env.warp_unix(4000); // even past the window, a Challenged claim can't be settled
     let res = env.send(
         urthr_net::instruction::SettleClaim {},
@@ -282,7 +302,7 @@ fn resolve_fraud_slashes_stake_and_compensates_advertiser() {
     let s = setup(&mut env); // attestor == payer
     let claim = submit(&mut env, &s, 0, 40); // amount 40
     let challenger = solana_keypair::Keypair::new();
-    challenge(&mut env, claim, &challenger);
+    challenge(&mut env, &s, claim, &challenger);
 
     let stake_before = env.token_balance(&s.stake_vault);   // 100
     let escrow_before = env.token_balance(&s.escrow_vault); // 200
@@ -319,7 +339,7 @@ fn resolve_valid_settles_like_unchallenged() {
     let s = setup(&mut env);
     let claim = submit(&mut env, &s, 0, 40);
     let challenger = solana_keypair::Keypair::new();
-    challenge(&mut env, claim, &challenger);
+    challenge(&mut env, &s, claim, &challenger);
     let wallet_before = env.token_balance(&s.wallet);
 
     env.send(
@@ -347,7 +367,7 @@ fn resolve_by_non_attestor_is_rejected() {
     let s = setup(&mut env);
     let claim = submit(&mut env, &s, 0, 40);
     let challenger = solana_keypair::Keypair::new();
-    challenge(&mut env, claim, &challenger);
+    challenge(&mut env, &s, claim, &challenger);
     let imposter = solana_keypair::Keypair::new();
     env.svm.airdrop(&imposter.pubkey(), 1_000_000_000).unwrap();
     let res = env.send(
