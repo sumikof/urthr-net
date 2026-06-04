@@ -22,9 +22,9 @@ import { ClaimInspector } from "./debug/accounts/ClaimInspector";
 
 function App() {
   return (
-    <main style={{ maxWidth: 880, margin: "2rem auto", fontFamily: "sans-serif" }}>
+    <main className="app">
       <h1>urthr-net — デバッグハーネス</h1>
-      <p style={{ color: "#666" }}>
+      <p className="app-intro">
         localnet 用デバッグ画面。各命令をシミュレートしてから送信します。
       </p>
       <section>
