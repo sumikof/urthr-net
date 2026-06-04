@@ -6,6 +6,7 @@ import { getInitializeMintInstruction, getMintSize } from "@solana-program/token
 import { DebugPanel } from "../core/DebugPanel";
 import { TextField, parseU16, useField } from "../core/fields";
 import { TOKEN_PROGRAM_ADDRESS } from "../core/programs";
+import { CopyButton } from "../../components/CopyButton";
 
 /**
  * Create a fresh SPL mint on localnet, with the connected wallet as mint
@@ -81,8 +82,10 @@ export function CreateMintPanel() {
           {generating ? "生成中…" : "mint鍵を生成"}
         </button>
         {mintSigner && (
-          <span style={{ marginLeft: 8, wordBreak: "break-all", fontSize: "0.9em" }}>
-            mint: {mintSigner.address}
+          <span className="addr-row" style={{ marginLeft: 8 }}>
+            <span>mint:</span>
+            <code className="addr">{mintSigner.address}</code>
+            <CopyButton value={mintSigner.address} />
           </span>
         )}
       </div>
