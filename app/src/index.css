@@ -109,3 +109,139 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ===== debug screen ===== */
+
+.app {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+  text-align: left;
+}
+.app section {
+  margin-top: 28px;
+}
+.app section > h2 {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+.app-intro {
+  color: var(--text);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.panel > legend {
+  font-weight: 600;
+  color: var(--text-h);
+  padding: 0 6px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+.field > .field-label {
+  min-width: 180px;
+  color: var(--text);
+}
+.field > input {
+  flex: 1;
+  max-width: 380px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+.field > input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.field-error {
+  color: crimson;
+  font-size: 0.9em;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-copy {
+  font-size: 0.8em;
+  padding: 2px 8px;
+}
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.result {
+  margin-top: 12px;
+  font-size: 0.9em;
+}
+.result-ok {
+  color: green;
+}
+.result-err {
+  color: crimson;
+}
+.result pre,
+.inspector-json {
+  background: var(--code-bg);
+  border-radius: 6px;
+  padding: 10px;
+  font: 0.8em var(--mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.addr {
+  font: 0.9em var(--mono);
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.addr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
