@@ -9,13 +9,6 @@ import { stringifyWithBigInt } from "../../lib/json";
 // so it stays in sync with codama output rather than being hand-written.
 type Rpc = Parameters<typeof fetchMaybeProtocolConfig>[0];
 
-const box: React.CSSProperties = {
-  border: "1px solid #ccc",
-  borderRadius: 6,
-  padding: "0.75rem 1rem",
-  margin: "0.75rem 0",
-};
-
 export type AccountInspectorProps = Readonly<{
   title: string;
   /**
@@ -88,8 +81,8 @@ export function AccountInspector({
   }
 
   return (
-    <fieldset style={box}>
-      <legend style={{ fontWeight: 600 }}>{title}</legend>
+    <fieldset className="panel">
+      <legend>{title}</legend>
 
       {children}
 
@@ -100,9 +93,10 @@ export function AccountInspector({
         error={addr && !parsed.ok ? parsed.error : undefined}
       />
 
-      <div style={{ marginTop: "0.5rem" }}>
+      <div className="panel-actions">
         <button
           type="button"
+          className="btn"
           onClick={() => void onFetch()}
           disabled={!parsed.ok || state.kind === "loading"}
         >
@@ -110,25 +104,12 @@ export function AccountInspector({
         </button>
       </div>
 
-      {state.kind === "missing" && (
-        <p style={{ marginTop: "0.5rem" }}>未作成</p>
-      )}
+      {state.kind === "missing" && <p style={{ marginTop: "0.5rem" }}>未作成</p>}
 
-      {state.kind === "ok" && (
-        <pre
-          style={{
-            marginTop: "0.5rem",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-            fontSize: "0.8em",
-          }}
-        >
-          {state.json}
-        </pre>
-      )}
+      {state.kind === "ok" && <pre className="inspector-json">{state.json}</pre>}
 
       {state.kind === "error" && (
-        <p style={{ color: "crimson", marginTop: "0.5rem", wordBreak: "break-all" }}>
+        <p className="result result-err" style={{ wordBreak: "break-all" }}>
           デコード不可: {state.message}
         </p>
       )}

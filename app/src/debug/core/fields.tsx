@@ -32,11 +32,14 @@ export function TextField(props: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string; error?: string;
 }) {
   return (
-    <label style={{ display: "block", margin: "0.25rem 0" }}>
-      <span style={{ display: "inline-block", minWidth: 180 }}>{props.label}</span>
-      <input value={props.value} placeholder={props.placeholder}
-        onChange={(e) => props.onChange(e.target.value)} style={{ width: 360 }} />
-      {props.error && <span style={{ color: "crimson", marginLeft: 8 }}>{props.error}</span>}
+    <label className="field">
+      <span className="field-label">{props.label}</span>
+      <input
+        value={props.value}
+        placeholder={props.placeholder}
+        onChange={(e) => props.onChange(e.target.value)}
+      />
+      {props.error && <span className="field-error">{props.error}</span>}
     </label>
   );
 }
