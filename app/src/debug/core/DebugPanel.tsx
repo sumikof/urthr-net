@@ -21,12 +21,6 @@ export type DebugPanelProps = Readonly<{
   resetKey?: unknown;
 }>;
 
-const box: React.CSSProperties = {
-  border: "1px solid #ccc",
-  borderRadius: 6,
-  padding: "0.75rem 1rem",
-  margin: "0.75rem 0",
-};
 
 /**
  * Reusable simulate-before-send card. Renders the supplied inputs, a "シミュレート"
@@ -47,14 +41,15 @@ export function DebugPanel({ title, children, build, disabled, resetKey }: Debug
   }, [resetKey]);
 
   return (
-    <fieldset style={box}>
-      <legend style={{ fontWeight: 600 }}>{title}</legend>
+    <fieldset className="panel">
+      <legend>{title}</legend>
 
       {children}
 
-      <div style={{ marginTop: "0.5rem", display: "flex", gap: 8 }}>
+      <div className="panel-actions">
         <button
           type="button"
+          className="btn"
           onClick={() => void runner.simulate(build)}
           disabled={disabled || runner.isSimulating}
         >
@@ -62,6 +57,7 @@ export function DebugPanel({ title, children, build, disabled, resetKey }: Debug
         </button>
         <button
           type="button"
+          className="btn btn-primary"
           onClick={() => void runner.send()}
           disabled={disabled || !runner.canSend || runner.isSending}
         >
@@ -70,11 +66,11 @@ export function DebugPanel({ title, children, build, disabled, resetKey }: Debug
       </div>
 
       {summary && (
-        <div style={{ marginTop: "0.5rem", fontSize: "0.9em" }}>
-          <div style={{ color: summary.err ? "crimson" : "green" }}>
+        <div className="result">
+          <div className={summary.err ? "result-err" : "result-ok"}>
             {summary.err ? "シミュレーション: 失敗" : "シミュレーション: 成功"}
             {summary.unitsConsumed != null && (
-              <span style={{ marginLeft: 8, color: "#444" }}>
+              <span style={{ marginLeft: 8, color: "var(--text)" }}>
                 CU: {summary.unitsConsumed.toString()}
               </span>
             )}
@@ -82,28 +78,22 @@ export function DebugPanel({ title, children, build, disabled, resetKey }: Debug
           {summary.logs && summary.logs.length > 0 && (
             <details style={{ marginTop: 4 }}>
               <summary>ログ ({summary.logs.length})</summary>
-              <pre style={{ whiteSpace: "pre-wrap", margin: "4px 0", fontSize: "0.8em" }}>
-                {summary.logs.join("\n")}
-              </pre>
+              <pre>{summary.logs.join("\n")}</pre>
             </details>
           )}
         </div>
       )}
 
       {signature && phase === "sent" && (
-        <p style={{ color: "green", marginTop: "0.5rem", wordBreak: "break-all" }}>
+        <p className="result result-ok" style={{ wordBreak: "break-all" }}>
           署名: {signature}
         </p>
       )}
 
       {error && phase === "error" && (
         <p
-          style={{
-            color: "crimson",
-            marginTop: "0.5rem",
-            wordBreak: "break-all",
-            whiteSpace: "pre-wrap",
-          }}
+          className="result result-err"
+          style={{ wordBreak: "break-all", whiteSpace: "pre-wrap" }}
         >
           エラー: {error}
         </p>
@@ -111,7 +101,7 @@ export function DebugPanel({ title, children, build, disabled, resetKey }: Debug
 
       {(phase === "sent" || phase === "error") && (
         <div style={{ marginTop: "0.5rem" }}>
-          <button type="button" onClick={() => runner.reset()}>
+          <button type="button" className="btn" onClick={() => runner.reset()}>
             リセット
           </button>
         </div>
